@@ -80,7 +80,7 @@ strict = false
 ignore_missing_imports = true
 
 [tool.setuptools]
-packages = ["backend", "pipeline", "training", "eval"]
+packages = ["backend", "pipeline"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
