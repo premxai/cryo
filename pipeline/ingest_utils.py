@@ -7,8 +7,9 @@ import hashlib
 import json
 import re
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 def clean_html(text: str) -> str:

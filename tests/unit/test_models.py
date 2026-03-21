@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from backend.models import SearchQuery, SearchResult, SearchResponse
+from backend.models import SearchQuery, SearchResult
 
 
 class TestSearchQuery:

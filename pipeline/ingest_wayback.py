@@ -24,7 +24,6 @@ from pipeline.ingest_utils import (
     count_words,
     format_timestamp,
     make_doc_id,
-    save_checkpoint,
 )
 
 try:
@@ -213,9 +212,7 @@ def _is_article_url(url: str) -> bool:
     if ":" in urllib.parse.urlparse(url).netloc.split("@")[-1]:
         return False
     # Article URLs usually have a descriptive slug with hyphens
-    if len(last) < 5:
-        return False
-    return True
+    return not len(last) < 5
 
 
 def fetch_cdx_urls(domain: str, limit: int = 300) -> list[tuple[str, str]]:
@@ -307,7 +304,8 @@ def ts_to_date(timestamp: str) -> tuple[int, int, int]:
 def url_to_domain(url: str) -> str:
     """Extract hostname from a URL."""
     try:
-        return urllib.parse.urlparse(url).netloc.lstrip("www.")
+        netloc = urllib.parse.urlparse(url).netloc
+        return netloc[4:] if netloc.startswith("www.") else netloc
     except Exception:
         return "unknown"
 

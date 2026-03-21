@@ -1,7 +1,8 @@
 """Integration tests for the /search and health endpoints."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from backend.models import SearchResponse, SearchResult
 

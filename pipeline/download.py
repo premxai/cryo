@@ -11,7 +11,6 @@ Each doc: {id, url, text, timestamp, year, domain, word_count}
 import argparse
 import hashlib
 import json
-import os
 import re
 import time
 from pathlib import Path

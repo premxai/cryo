@@ -18,9 +18,9 @@ from typing import Annotated
 
 import structlog
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -140,7 +140,7 @@ async def search(params: Annotated[SearchQuery, Depends()]) -> SearchResponse:
         return keyword_search(params)
     except Exception as exc:
         logger.error("cryo.search.failed", query=params.q, error=str(exc))
-        raise HTTPException(status_code=503, detail="Search service temporarily unavailable")
+        raise HTTPException(status_code=503, detail="Search service temporarily unavailable") from exc
 
 
 @app.get(
@@ -197,7 +197,7 @@ async def liveness() -> HealthResponse:
     tags=["Health"],
     include_in_schema=False,
 )
-async def readiness(db: AsyncSession = Depends(get_db)) -> HealthResponse:
+async def readiness(db: Annotated[AsyncSession, Depends(get_db)]) -> HealthResponse:
     """Readiness probe — returns 200 if the app can serve traffic.
 
     DB failure returns 503 in production, degrades to warning in development.
@@ -208,5 +208,5 @@ async def readiness(db: AsyncSession = Depends(get_db)) -> HealthResponse:
     except Exception as exc:
         logger.warning("cryo.readiness.db_failed", error=str(exc))
         if settings.is_production:
-            raise HTTPException(status_code=503, detail="Database unavailable")
+            raise HTTPException(status_code=503, detail="Database unavailable") from exc
         return HealthResponse(status="ok", db="unavailable (dev mode)")

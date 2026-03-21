@@ -16,7 +16,6 @@ Then run:
 
 import argparse
 import bz2
-import json
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -26,9 +25,9 @@ from pipeline.ingest_utils import (
     append_jsonl,
     count_words,
     format_timestamp,
+    load_checkpoint,
     make_doc_id,
     save_checkpoint,
-    load_checkpoint,
 )
 
 try:
@@ -84,9 +83,7 @@ def should_skip(title: str, text: str) -> bool:
             return True
     if _REDIRECT_RE.match(text.strip()):
         return True
-    if _DISAMBIG_RE.search(text[:500]):
-        return True
-    return False
+    return bool(_DISAMBIG_RE.search(text[:500]))
 
 
 def chunk_article(title: str, text: str, url: str, timestamp: str,
@@ -137,16 +134,13 @@ def iter_articles(dump_path: Path):
     Supports both .bz2 compressed and plain .xml files.
     Uses iterparse to avoid loading the whole file into memory.
     """
-    if dump_path.suffix == ".bz2":
-        fh = bz2.open(dump_path, "rt", encoding="utf-8", errors="replace")
-    else:
-        fh = open(dump_path, "r", encoding="utf-8", errors="replace")
+    opener = bz2.open if dump_path.suffix == ".bz2" else open
 
-    with fh:
+    with opener(dump_path, "rt", encoding="utf-8", errors="replace") as fh:
         context = ET.iterparse(fh, events=("end",))
         title = text = timestamp = None
 
-        for event, elem in context:
+        for _event, elem in context:
             tag = elem.tag
 
             # Strip namespace prefix for comparison

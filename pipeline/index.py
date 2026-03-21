@@ -110,7 +110,7 @@ def index_documents(data_path: str, batch_size: int) -> None:
             batch.append(doc)
 
             if len(batch) >= batch_size:
-                task = index.add_documents(batch)
+                index.add_documents(batch)
                 total_indexed += len(batch)
                 pbar.update(len(batch))
                 batch_num += 1

@@ -14,7 +14,6 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-
 REQUIRED_FIELDS = {"id", "url", "text", "timestamp", "year", "domain", "word_count"}
 MAX_ALLOWED_YEAR = 2021
 

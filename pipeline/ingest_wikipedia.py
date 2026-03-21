@@ -9,16 +9,15 @@ Usage:
 """
 
 import argparse
+import json
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
-import json
 from pathlib import Path
 
 from pipeline.ingest_utils import (
     append_jsonl,
-    clean_html,
     count_words,
     exponential_backoff,
     format_timestamp,
@@ -169,7 +168,7 @@ def main() -> None:
     args = parser.parse_args()
 
     output = Path(args.output)
-    checkpoint = Path(f"data/.checkpoint_wikipedia")
+    checkpoint = Path("data/.checkpoint_wikipedia")
     ingest(args.limit, output, checkpoint)
 
 
