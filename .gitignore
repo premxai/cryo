@@ -1,0 +1,60 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!.env.production
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# uv
+uv.lock
+
+# Data (too large for git)
+data/raw/
+data/.checkpoint*
+data/meili/
+data/*.log
+data/scores_cache.jsonl
+
+# Binaries
+bin/
+
+# ML models
+models/
+
+# Eval results (committed selectively)
+# eval/results/
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db

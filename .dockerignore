@@ -1,0 +1,45 @@
+# Version control
+.git
+.gitignore
+
+# Secrets — NEVER in Docker image
+.env
+.env.*
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+.Python
+
+# Virtual environments
+.venv
+venv
+
+# Test artifacts
+.pytest_cache
+.coverage
+htmlcov
+coverage.xml
+tests/
+
+# Data — too large, mounted as volumes
+data/
+models/
+
+# Frontend (built separately, deployed to Vercel)
+frontend/
+
+# Docs
+*.md
+docs/
+production_plan.md
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

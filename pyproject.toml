@@ -1,0 +1,84 @@
+[project]
+name = "cryo"
+version = "0.1.0"
+description = "Authenticated human web search — pre-2022 corpus with RLAIF"
+requires-python = ">=3.11"
+dependencies = [
+    # Web framework
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "gunicorn>=22.0",
+    # Data validation + config
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    # Database (async)
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    # HTTP client
+    "httpx>=0.27",
+    # Observability
+    "structlog>=24.2",
+    "prometheus-fastapi-instrumentator>=2.0",
+    # Rate limiting
+    "fastapi-limiter>=0.1.6",
+    # Cache + queue
+    "redis[hiredis]>=5.0",
+    # Search infra
+    "meilisearch>=0.31",
+    "qdrant-client>=1.10",
+    # Data pipeline
+    "datasets>=2.20",
+    "tqdm>=4.66",
+    "python-dotenv>=1.0.1",
+    "mwparserfromhell>=0.6.6",
+]
+
+[project.optional-dependencies]
+ml = [
+    # Embedding model + training (added in M3/M4)
+    "sentence-transformers>=3.0",
+    "transformers>=4.44",
+    "trl>=0.9",
+    "torch>=2.4",
+    "anthropic>=0.34",
+    "wandb>=0.17",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "httpx>=0.27",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "testcontainers[postgres,redis]>=4.0",
+    "hypothesis>=6.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "httpx>=0.27",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "hypothesis>=6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
