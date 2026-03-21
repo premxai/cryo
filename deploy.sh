@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-REPO_URL="https://github.com/YOURUSERNAME/cryo.git"
+REPO_URL="https://github.com/premxai/cryo.git"
 APP_DIR="/opt/cryo"
 
 echo "=== Cryo Production Deploy ==="
