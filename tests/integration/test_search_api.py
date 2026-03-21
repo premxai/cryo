@@ -32,7 +32,9 @@ class TestSearchEndpoint:
     """Tests for GET /search."""
 
     async def test_search_returns_200(self, client):
-        with patch("backend.main.keyword_search", return_value=_mock_search_response("machine learning")):
+        with patch(
+            "backend.main.keyword_search", return_value=_mock_search_response("machine learning")
+        ):
             response = await client.get("/search", params={"q": "machine learning"})
         assert response.status_code == 200
 
@@ -94,9 +96,9 @@ class TestSearchEndpoint:
         """Search should never 500 on user input — at worst 422 or 503."""
         test_inputs = [
             "hello world",
-            "hello\x00world",   # null bytes sanitized
-            "a" * 499,          # near-max length
-            "   spaces   ",     # whitespace trimmed
+            "hello\x00world",  # null bytes sanitized
+            "a" * 499,  # near-max length
+            "   spaces   ",  # whitespace trimmed
         ]
         for q in test_inputs:
             with patch("backend.main.keyword_search", return_value=_mock_search_response(q)):
@@ -104,7 +106,10 @@ class TestSearchEndpoint:
             assert response.status_code != 500, f"Got 500 for query: {repr(q)}"
 
     async def test_suggest_returns_list(self, client):
-        with patch("backend.main.suggest_completions", return_value=["machine learning", "machine translation"]):
+        with patch(
+            "backend.main.suggest_completions",
+            return_value=["machine learning", "machine translation"],
+        ):
             response = await client.get("/suggest", params={"q": "mach"})
         assert response.status_code == 200
         assert isinstance(response.json(), list)
@@ -130,8 +135,10 @@ class TestHealthEndpoints:
         mock_session.execute = MagicMock(return_value=None)
 
         with patch("backend.main.get_db") as mock_dep:
+
             async def _yield_session():
                 yield mock_session
+
             mock_dep.return_value = _yield_session()
 
             # The readiness endpoint does a SELECT 1 — we just need it not to raise

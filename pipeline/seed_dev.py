@@ -264,7 +264,6 @@ ARTICLES = [
             "open source funding. This isn't sustainable."
         ),
     },
-
     # ── SCIENCE ───────────────────────────────────────────────────────────────
     {
         "domain": "science.org",
@@ -457,7 +456,6 @@ ARTICLES = [
             "understanding what makes one 'healthy' remains contested."
         ),
     },
-
     # ── HISTORY / HUMANITIES ─────────────────────────────────────────────────
     {
         "domain": "historytoday.com",
@@ -611,7 +609,6 @@ ARTICLES = [
             "pleasurable. You have to choose which to feed."
         ),
     },
-
     # ── PERSONAL ESSAYS / BLOGS ───────────────────────────────────────────────
     {
         "domain": "paulgraham.com",
@@ -721,7 +718,6 @@ ARTICLES = [
             "other people. That impulse hasn't died. You just have to know where to look."
         ),
     },
-
     # ── FOOD / COOKING ────────────────────────────────────────────────────────
     {
         "domain": "seriouseats.com",
@@ -788,7 +784,6 @@ ARTICLES = [
             "more complex."
         ),
     },
-
     # ── SPORTS ────────────────────────────────────────────────────────────────
     {
         "domain": "fivethirtyeight.com",
@@ -833,7 +828,6 @@ ARTICLES = [
             "the defensive line."
         ),
     },
-
     # ── ECONOMICS / BUSINESS ─────────────────────────────────────────────────
     {
         "domain": "aswathdamodaran.com",
@@ -901,7 +895,6 @@ ARTICLES = [
             "requires tolerating conflict between divisions and short-term profit sacrifice."
         ),
     },
-
     # ── ENVIRONMENT / NATURE ──────────────────────────────────────────────────
     {
         "domain": "nationalgeographic.com",
@@ -947,7 +940,6 @@ ARTICLES = [
             "research area."
         ),
     },
-
     # ── MUSIC ─────────────────────────────────────────────────────────────────
     {
         "domain": "pitchfork.com",
@@ -992,7 +984,6 @@ ARTICLES = [
             "expectations — the emotion comes from whether expectations are met or violated."
         ),
     },
-
     # ── PSYCHOLOGY / COGNITION ────────────────────────────────────────────────
     {
         "domain": "psychologytoday.com",
@@ -1039,7 +1030,6 @@ ARTICLES = [
             "of this is domain-specific language machinery versus general cognition."
         ),
     },
-
     # ── Q&A / DISCUSSION ──────────────────────────────────────────────────────
     {
         "domain": "news.ycombinator.com",
@@ -1177,7 +1167,6 @@ ARTICLES = [
             "overwhelmingly likely to move toward higher entropy."
         ),
     },
-
     # ── TRAVEL / CULTURE ──────────────────────────────────────────────────────
     {
         "domain": "lonelyplanet.com",
@@ -1225,7 +1214,6 @@ ARTICLES = [
             "We don't know yet which of these losses matter and which can be replicated."
         ),
     },
-
     # ── DATABASE / SYSTEMS ────────────────────────────────────────────────────
     {
         "domain": "db-engines.com",
@@ -1289,7 +1277,6 @@ ARTICLES = [
             "ownership to another user. The root user bypasses all permission checks."
         ),
     },
-
     # ── MATHEMATICS ───────────────────────────────────────────────────────────
     {
         "domain": "math.mit.edu",
@@ -1333,7 +1320,6 @@ ARTICLES = [
             "frequency domain — this makes filtering dramatically faster."
         ),
     },
-
     # ── MEDICINE / HEALTH ─────────────────────────────────────────────────────
     {
         "domain": "medicalnewstoday.com",
@@ -1722,7 +1708,6 @@ DIVERSE_TEMPLATES = [
             "Mediterranean diet adherents."
         ),
     },
-
     # ── SPORTS / FITNESS ──────────────────────────────────────────────────────
     {
         "domain": "runnersworld.com",
@@ -1813,7 +1798,6 @@ DIVERSE_TEMPLATES = [
             "for most beginners. Rest is when the adaptation happens."
         ),
     },
-
     # ── MUSIC ─────────────────────────────────────────────────────────────────
     {
         "domain": "pitchfork.com",
@@ -1883,7 +1867,6 @@ DIVERSE_TEMPLATES = [
             "the free stroke (apoyando) and rest stroke (tirando) — both worth learning."
         ),
     },
-
     # ── FILM / TV ─────────────────────────────────────────────────────────────
     {
         "domain": "rogerebert.com",
@@ -1932,7 +1915,6 @@ DIVERSE_TEMPLATES = [
             "the decade TV finally grew up."
         ),
     },
-
     # ── HEALTH / WELLNESS ─────────────────────────────────────────────────────
     {
         "domain": "healthline.com",
@@ -2002,7 +1984,6 @@ DIVERSE_TEMPLATES = [
             "reduce risk. These interventions combine multiplicatively."
         ),
     },
-
     # ── TRAVEL ────────────────────────────────────────────────────────────────
     {
         "domain": "lonelyplanet.com",
@@ -2052,7 +2033,6 @@ DIVERSE_TEMPLATES = [
             "its main attractions."
         ),
     },
-
     # ── PARENTING ─────────────────────────────────────────────────────────────
     {
         "domain": "parents.com",
@@ -2102,7 +2082,6 @@ DIVERSE_TEMPLATES = [
             "an impulse purchase regretted — when the stakes are still low."
         ),
     },
-
     # ── GAMING ────────────────────────────────────────────────────────────────
     {
         "domain": "polygon.com",
@@ -2151,7 +2130,6 @@ DIVERSE_TEMPLATES = [
             "project management without calling any of it that."
         ),
     },
-
     # ── ENVIRONMENT / NATURE ──────────────────────────────────────────────────
     {
         "domain": "nationalgeographic.com",
@@ -2201,7 +2179,6 @@ DIVERSE_TEMPLATES = [
             "every one to two days."
         ),
     },
-
     # ── PSYCHOLOGY / SELF-HELP ────────────────────────────────────────────────
     {
         "domain": "psychologytoday.com",
@@ -2227,7 +2204,6 @@ DIVERSE_TEMPLATES = [
             "situations, allowing the fear response to extinguish."
         ),
     },
-
     # ── SCIENCE / NATURE ──────────────────────────────────────────────────────
     {
         "domain": "scientificamerican.com",
@@ -2252,7 +2228,6 @@ DIVERSE_TEMPLATES = [
             "been in development for twenty years before COVID accelerated deployment."
         ),
     },
-
     # ── FINANCE / PERSONAL FINANCE ────────────────────────────────────────────
     {
         "domain": "investopedia.com",
@@ -2277,7 +2252,6 @@ DIVERSE_TEMPLATES = [
             "downturns. Time in the market beats timing the market."
         ),
     },
-
     # ── GARDENING / HOME ──────────────────────────────────────────────────────
     {
         "domain": "gardeningknowhow.com",

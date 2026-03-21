@@ -53,9 +53,7 @@ def validate(data_path: str, expected: int) -> bool:
                 # Check required fields present
                 missing = REQUIRED_FIELDS - set(doc.keys())
                 if missing:
-                    errors.append(
-                        f"{jsonl_file.name}:{line_num} — Missing fields: {missing}"
-                    )
+                    errors.append(f"{jsonl_file.name}:{line_num} — Missing fields: {missing}")
 
                 # Check text is non-empty
                 if not doc.get("text", "").strip():
@@ -64,9 +62,7 @@ def validate(data_path: str, expected: int) -> bool:
                 # Check year is in valid range
                 year = doc.get("year")
                 if year is None or not isinstance(year, int) or year > MAX_ALLOWED_YEAR:
-                    errors.append(
-                        f"{jsonl_file.name}:{line_num} — Invalid year: {year}"
-                    )
+                    errors.append(f"{jsonl_file.name}:{line_num} — Invalid year: {year}")
 
                 # Check doc ID is non-empty
                 if not doc.get("id", "").strip():

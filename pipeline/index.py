@@ -62,14 +62,16 @@ def configure_index(client: meilisearch.Client) -> meilisearch.index.Index:
     # not as index settings. Meilisearch doesn't support them in update_settings.
 
     # Ranking: boost recent pre-2022 content
-    index.update_ranking_rules([
-        "words",
-        "typo",
-        "proximity",
-        "attribute",
-        "sort",
-        "exactness",
-    ])
+    index.update_ranking_rules(
+        [
+            "words",
+            "typo",
+            "proximity",
+            "attribute",
+            "sort",
+            "exactness",
+        ]
+    )
 
     print("[index] Index configured.")
     return index
@@ -134,7 +136,9 @@ def main() -> None:
     """Entry point."""
     parser = argparse.ArgumentParser(description="Index JSONL docs into Meilisearch.")
     parser.add_argument("--data-path", type=str, default="data/raw", help="Path to JSONL files.")
-    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Docs per batch.")
+    parser.add_argument(
+        "--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help="Docs per batch."
+    )
     args = parser.parse_args()
 
     index_documents(data_path=args.data_path, batch_size=args.batch_size)

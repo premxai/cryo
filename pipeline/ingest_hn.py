@@ -29,13 +29,14 @@ from pipeline.ingest_utils import (
 
 try:
     from tqdm import tqdm
+
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
 
 ALGOLIA_BASE = "https://hn.algolia.com/api/v1"
-PRE_2022_TS = 1640995200   # 2022-01-01 00:00:00 UTC
-MIN_STORY_SCORE = 10     # lowered: more content, still quality
+PRE_2022_TS = 1640995200  # 2022-01-01 00:00:00 UTC
+MIN_STORY_SCORE = 10  # lowered: more content, still quality
 MIN_COMMENT_SCORE = 10
 MIN_WORDS = 80
 CHECKPOINT_EVERY = 200
@@ -54,6 +55,7 @@ def ts_to_parts(unix_ts: int) -> tuple[int, int, int]:
     """Convert unix timestamp to (year, month, day) without datetime import."""
     # Simplified: use struct_time via time module
     import time as t
+
     st = t.gmtime(unix_ts)
     return st.tm_year, st.tm_mon, st.tm_mday
 
@@ -61,37 +63,43 @@ def ts_to_parts(unix_ts: int) -> tuple[int, int, int]:
 def fetch_stories(page: int, ts_start: int = 0, ts_end: int = PRE_2022_TS) -> list[dict]:
     """Fetch one page of HN stories within a time window."""
     filters = f"created_at_i>{ts_start},created_at_i<{ts_end},points>={MIN_STORY_SCORE}"
-    data = algolia_get("search_by_date", {
-        "tags": "story",
-        "numericFilters": filters,
-        "hitsPerPage": HITS_PER_PAGE,
-        "page": page,
-        "attributesToRetrieve": "objectID,title,url,story_text,points,created_at_i",
-    })
+    data = algolia_get(
+        "search_by_date",
+        {
+            "tags": "story",
+            "numericFilters": filters,
+            "hitsPerPage": HITS_PER_PAGE,
+            "page": page,
+            "attributesToRetrieve": "objectID,title,url,story_text,points,created_at_i",
+        },
+    )
     return data.get("hits", [])
 
 
 # Year windows to bypass Algolia's 1000-result cap per query
 YEAR_WINDOWS = [
-    (0,          1388534400),  # before 2014
+    (0, 1388534400),  # before 2014
     (1388534400, 1451606400),  # 2014-2015
     (1451606400, 1514764800),  # 2016-2017
     (1514764800, 1546300800),  # 2018
     (1546300800, 1577836800),  # 2019
     (1577836800, 1609459200),  # 2020
-    (1609459200, PRE_2022_TS), # 2021
+    (1609459200, PRE_2022_TS),  # 2021
 ]
 
 
 def fetch_top_comments(story_id: str, max_comments: int = 5) -> list[str]:
     """Fetch top comments for a story by score."""
     try:
-        data = algolia_get("search", {
-            "tags": f"comment,story_{story_id}",
-            "numericFilters": f"points>={MIN_COMMENT_SCORE}",
-            "hitsPerPage": max_comments,
-            "attributesToRetrieve": "comment_text,points",
-        })
+        data = algolia_get(
+            "search",
+            {
+                "tags": f"comment,story_{story_id}",
+                "numericFilters": f"points>={MIN_COMMENT_SCORE}",
+                "hitsPerPage": max_comments,
+                "attributesToRetrieve": "comment_text,points",
+            },
+        )
         comments = []
         for hit in data.get("hits", []):
             raw = hit.get("comment_text", "")
@@ -149,7 +157,9 @@ def ingest(limit: int, output: Path, checkpoint_path: Path) -> None:
     print(f"[hn] Starting from checkpoint: {done} items")
 
     batch_buf: list[dict] = []
-    windows = tqdm(YEAR_WINDOWS, desc="HN year windows", unit="window") if HAS_TQDM else YEAR_WINDOWS
+    windows = (
+        tqdm(YEAR_WINDOWS, desc="HN year windows", unit="window") if HAS_TQDM else YEAR_WINDOWS
+    )
 
     for ts_start, ts_end in windows:
         if collected >= limit:
@@ -157,6 +167,7 @@ def ingest(limit: int, output: Path, checkpoint_path: Path) -> None:
 
         page = 0
         while collected < limit:
+
             def _fetch(p=page, s=ts_start, e=ts_end) -> list[dict]:
                 hits = fetch_stories(p, ts_start=s, ts_end=e)
                 time.sleep(0.5)

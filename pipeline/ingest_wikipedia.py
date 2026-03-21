@@ -28,16 +28,17 @@ from pipeline.ingest_utils import (
 
 try:
     from tqdm import tqdm
+
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
 
 API_BASE = "https://en.wikipedia.org/w/api.php"
-BATCH_SIZE = 50        # Wikipedia API supports up to 500 random at once
-MIN_WORDS = 50         # many good short articles exist
+BATCH_SIZE = 50  # Wikipedia API supports up to 500 random at once
+MIN_WORDS = 50  # many good short articles exist
 CHECKPOINT_EVERY = 200
 TARGET_YEAR_MAX = 2021
-REQUEST_DELAY = 4.0    # seconds between API calls — be conservative to avoid 429s
+REQUEST_DELAY = 4.0  # seconds between API calls — be conservative to avoid 429s
 
 
 def api_get(params: dict) -> dict:
@@ -52,25 +53,29 @@ def api_get(params: dict) -> dict:
 
 def fetch_random_titles(n: int = BATCH_SIZE) -> list[str]:
     """Return n random Wikipedia article titles."""
-    data = api_get({
-        "action": "query",
-        "list": "random",
-        "rnnamespace": "0",
-        "rnlimit": str(n),
-    })
+    data = api_get(
+        {
+            "action": "query",
+            "list": "random",
+            "rnnamespace": "0",
+            "rnlimit": str(n),
+        }
+    )
     return [p["title"] for p in data["query"]["random"]]
 
 
 def fetch_articles(titles: list[str]) -> list[dict]:
     """Fetch text + last-edit timestamp for a batch of titles."""
-    data = api_get({
-        "action": "query",
-        "titles": "|".join(titles),
-        "prop": "extracts|info",
-        "exintro": "0",          # full article, not just intro
-        "explaintext": "1",      # plain text, no wiki markup
-        "inprop": "url",         # adds fullurl to each page
-    })
+    data = api_get(
+        {
+            "action": "query",
+            "titles": "|".join(titles),
+            "prop": "extracts|info",
+            "exintro": "0",  # full article, not just intro
+            "explaintext": "1",  # plain text, no wiki markup
+            "inprop": "url",  # adds fullurl to each page
+        }
+    )
     pages = data.get("query", {}).get("pages", {})
     results = []
     for page in pages.values():
@@ -102,16 +107,18 @@ def fetch_articles(titles: list[str]) -> list[dict]:
         if wc < MIN_WORDS:
             continue
 
-        results.append({
-            "id": make_doc_id(url, timestamp),
-            "url": url,
-            "text": text,
-            "timestamp": timestamp,
-            "year": year,
-            "domain": "en.wikipedia.org",
-            "word_count": wc,
-            "content_type": "encyclopedia",
-        })
+        results.append(
+            {
+                "id": make_doc_id(url, timestamp),
+                "url": url,
+                "text": text,
+                "timestamp": timestamp,
+                "year": year,
+                "domain": "en.wikipedia.org",
+                "word_count": wc,
+                "content_type": "encyclopedia",
+            }
+        )
     return results
 
 
@@ -123,8 +130,13 @@ def ingest(limit: int, output: Path, checkpoint_path: Path) -> None:
 
     iterator = range(done, limit, BATCH_SIZE)
     if HAS_TQDM:
-        iterator = tqdm(iterator, desc="Wikipedia articles", unit="batch",
-                        initial=done // BATCH_SIZE, total=limit // BATCH_SIZE)
+        iterator = tqdm(
+            iterator,
+            desc="Wikipedia articles",
+            unit="batch",
+            initial=done // BATCH_SIZE,
+            total=limit // BATCH_SIZE,
+        )
 
     batch_buf: list[dict] = []
 
@@ -134,9 +146,9 @@ def ingest(limit: int, output: Path, checkpoint_path: Path) -> None:
 
         def _fetch() -> list[dict]:
             titles = fetch_random_titles(BATCH_SIZE)
-            time.sleep(REQUEST_DELAY)   # respect Wikipedia's rate limit
+            time.sleep(REQUEST_DELAY)  # respect Wikipedia's rate limit
             articles = fetch_articles(titles)
-            time.sleep(REQUEST_DELAY)   # two calls per batch (titles + articles)
+            time.sleep(REQUEST_DELAY)  # two calls per batch (titles + articles)
             return articles
 
         try:

@@ -32,12 +32,13 @@ from pipeline.ingest_utils import (
 
 try:
     from tqdm import tqdm
+
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
 
 MIN_WORDS = 100
-CHUNK_WORDS = 1500        # articles longer than this get chunked
+CHUNK_WORDS = 1500  # articles longer than this get chunked
 CHUNK_OVERLAP_WORDS = 50  # overlap between chunks for context
 CHECKPOINT_EVERY = 5000
 BATCH_SIZE = 500
@@ -51,10 +52,10 @@ _REDIRECT_RE = re.compile(r"^#REDIRECT", re.IGNORECASE)
 _DISAMBIG_RE = re.compile(r"\{\{disambig", re.IGNORECASE)
 
 # MediaWiki markup cleanup patterns
-_TEMPLATE_RE = re.compile(r"\{\{[^}]*\}\}")       # {{templates}}
+_TEMPLATE_RE = re.compile(r"\{\{[^}]*\}\}")  # {{templates}}
 _LINK_RE = re.compile(r"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]")  # [[link|text]] → text
-_EXTLINK_RE = re.compile(r"\[https?://\S+ ([^\]]+)\]")    # [url text] → text
-_HTML_RE = re.compile(r"<[^>]+>")                  # <html tags>
+_EXTLINK_RE = re.compile(r"\[https?://\S+ ([^\]]+)\]")  # [url text] → text
+_HTML_RE = re.compile(r"<[^>]+>")  # <html tags>
 _HEADING_RE = re.compile(r"^=+\s*(.*?)\s*=+$", re.MULTILINE)  # == headings ==
 _REF_RE = re.compile(r"<ref[^>]*>.*?</ref>", re.DOTALL | re.IGNORECASE)
 _MULTIBLANK_RE = re.compile(r"\n{3,}")
@@ -78,53 +79,66 @@ def should_skip(title: str, text: str) -> bool:
     if ":" in title and not title.startswith("Talk:"):
         # Skip Wikipedia: File: Category: Template: etc. namespaces
         ns = title.split(":")[0]
-        if ns in ("Wikipedia", "File", "Category", "Template", "Portal",
-                  "Help", "Draft", "Module", "TimedText", "MediaWiki"):
+        if ns in (
+            "Wikipedia",
+            "File",
+            "Category",
+            "Template",
+            "Portal",
+            "Help",
+            "Draft",
+            "Module",
+            "TimedText",
+            "MediaWiki",
+        ):
             return True
     if _REDIRECT_RE.match(text.strip()):
         return True
     return bool(_DISAMBIG_RE.search(text[:500]))
 
 
-def chunk_article(title: str, text: str, url: str, timestamp: str,
-                  year: int) -> list[dict]:
+def chunk_article(title: str, text: str, url: str, timestamp: str, year: int) -> list[dict]:
     """Split a cleaned article into searchable chunks."""
     words = text.split()
     if len(words) <= CHUNK_WORDS:
         wc = len(words)
         if wc < MIN_WORDS:
             return []
-        return [{
-            "id": make_doc_id(url, timestamp),
-            "url": url,
-            "text": f"{title}\n\n{text}",
-            "timestamp": timestamp,
-            "year": year,
-            "domain": "en.wikipedia.org",
-            "word_count": wc,
-            "content_type": "encyclopedia",
-        }]
+        return [
+            {
+                "id": make_doc_id(url, timestamp),
+                "url": url,
+                "text": f"{title}\n\n{text}",
+                "timestamp": timestamp,
+                "year": year,
+                "domain": "en.wikipedia.org",
+                "word_count": wc,
+                "content_type": "encyclopedia",
+            }
+        ]
 
     # Chunk long articles
     docs = []
     step = CHUNK_WORDS - CHUNK_OVERLAP_WORDS
     for i, start in enumerate(range(0, len(words), step)):
-        chunk_words = words[start:start + CHUNK_WORDS]
+        chunk_words = words[start : start + CHUNK_WORDS]
         if len(chunk_words) < MIN_WORDS:
             break
         chunk_text = " ".join(chunk_words)
         chunk_url = f"{url}#section{i}" if i > 0 else url
         prefix = f"{title}\n\n" if i == 0 else f"{title} (continued)\n\n"
-        docs.append({
-            "id": make_doc_id(chunk_url, timestamp),
-            "url": url,
-            "text": prefix + chunk_text,
-            "timestamp": timestamp,
-            "year": year,
-            "domain": "en.wikipedia.org",
-            "word_count": len(chunk_words),
-            "content_type": "encyclopedia",
-        })
+        docs.append(
+            {
+                "id": make_doc_id(chunk_url, timestamp),
+                "url": url,
+                "text": prefix + chunk_text,
+                "timestamp": timestamp,
+                "year": year,
+                "domain": "en.wikipedia.org",
+                "word_count": len(chunk_words),
+                "content_type": "encyclopedia",
+            }
+        )
     return docs
 
 
@@ -159,8 +173,7 @@ def iter_articles(dump_path: Path):
                 elem.clear()
 
 
-def ingest(dump_path: Path, output: Path, checkpoint_path: Path,
-           limit: int | None = None) -> None:
+def ingest(dump_path: Path, output: Path, checkpoint_path: Path, limit: int | None = None) -> None:
     """Stream the dump and write Cryo JSONL docs."""
     done = load_checkpoint(checkpoint_path)
     collected = done
@@ -170,7 +183,9 @@ def ingest(dump_path: Path, output: Path, checkpoint_path: Path,
     if not dump_path.exists():
         print(f"[wiki-dump] ERROR: dump file not found: {dump_path}")
         print("[wiki-dump] Download with:")
-        print("  curl -C - -O https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2")
+        print(
+            "  curl -C - -O https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2"
+        )
         sys.exit(1)
 
     batch: list[dict] = []

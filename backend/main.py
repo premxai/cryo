@@ -36,6 +36,7 @@ logger = structlog.get_logger()
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application startup and shutdown lifecycle."""
@@ -89,6 +90,7 @@ app.add_middleware(
 
 # ── Request ID middleware ──────────────────────────────────────────────────────
 
+
 @app.middleware("http")
 async def request_id_middleware(request: Request, call_next):
     """Bind a unique request_id to every structlog log line within this request."""
@@ -101,6 +103,7 @@ async def request_id_middleware(request: Request, call_next):
 
 
 # ── Error handlers ────────────────────────────────────────────────────────────
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request: Request, exc: RequestValidationError):
@@ -122,6 +125,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+
 @app.get(
     "/search",
     response_model=SearchResponse,
@@ -140,7 +144,9 @@ async def search(params: Annotated[SearchQuery, Depends()]) -> SearchResponse:
         return keyword_search(params)
     except Exception as exc:
         logger.error("cryo.search.failed", query=params.q, error=str(exc))
-        raise HTTPException(status_code=503, detail="Search service temporarily unavailable") from exc
+        raise HTTPException(
+            status_code=503, detail="Search service temporarily unavailable"
+        ) from exc
 
 
 @app.get(

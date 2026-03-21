@@ -19,7 +19,7 @@ def configure_logging() -> None:
     """Configure structlog to emit newline-delimited JSON. Call once at startup."""
     structlog.configure(
         processors=[
-            structlog.contextvars.merge_contextvars,        # merge request_id etc.
+            structlog.contextvars.merge_contextvars,  # merge request_id etc.
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),

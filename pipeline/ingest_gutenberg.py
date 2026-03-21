@@ -30,6 +30,7 @@ from pipeline.ingest_utils import (
 
 try:
     from tqdm import tqdm
+
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
@@ -64,11 +65,13 @@ def _get(url: str, timeout: int = 20) -> bytes:
 
 def fetch_book_list(page: int) -> dict:
     """Fetch one page of popular English plain-text books from gutendex."""
-    params = urllib.parse.urlencode({
-        "languages": "en",
-        "mime_type": "text/plain",
-        "page": page,
-    })
+    params = urllib.parse.urlencode(
+        {
+            "languages": "en",
+            "mime_type": "text/plain",
+            "page": page,
+        }
+    )
     raw = _get(f"{GUTENDEX_BASE}?{params}")
     return json.loads(raw.decode("utf-8"))
 
@@ -108,7 +111,9 @@ def strip_gutenberg_boilerplate(text: str) -> str:
     return text[start_idx:end_idx].strip()
 
 
-def chunk_text(text: str, min_words: int = CHUNK_WORDS_MIN, max_words: int = CHUNK_WORDS_MAX) -> list[str]:
+def chunk_text(
+    text: str, min_words: int = CHUNK_WORDS_MIN, max_words: int = CHUNK_WORDS_MAX
+) -> list[str]:
     """Split text into chunks of roughly min_words–max_words words, splitting at paragraph boundaries."""
     paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     chunks: list[str] = []
@@ -176,16 +181,18 @@ def book_to_docs(book: dict) -> list[dict]:
     for i, chunk in enumerate(chunks):
         url = f"{gutenberg_url}#chunk{i}"
         wc = count_words(chunk)
-        docs.append({
-            "id": make_doc_id(url, timestamp),
-            "url": gutenberg_url,
-            "text": f"{title} — {authors}\n\n{chunk}" if i == 0 else chunk,
-            "timestamp": timestamp,
-            "year": 2010,
-            "domain": "gutenberg.org",
-            "word_count": wc,
-            "content_type": "book",
-        })
+        docs.append(
+            {
+                "id": make_doc_id(url, timestamp),
+                "url": gutenberg_url,
+                "text": f"{title} — {authors}\n\n{chunk}" if i == 0 else chunk,
+                "timestamp": timestamp,
+                "year": 2010,
+                "domain": "gutenberg.org",
+                "word_count": wc,
+                "content_type": "book",
+            }
+        )
 
     return docs
 
@@ -206,6 +213,7 @@ def ingest(book_limit: int, output: Path, checkpoint_path: Path) -> None:
         pbar.update(done)
 
     while collected < book_limit:
+
         def _fetch_page(p=page) -> dict:
             data = fetch_book_list(p)
             time.sleep(REQUEST_DELAY)
@@ -271,8 +279,9 @@ def ingest(book_limit: int, output: Path, checkpoint_path: Path) -> None:
 def main() -> None:
     """Entry point."""
     parser = argparse.ArgumentParser(description="Ingest Project Gutenberg books into Cryo.")
-    parser.add_argument("--books", type=int, default=500,
-                        help="Target number of document chunks (not books)")
+    parser.add_argument(
+        "--books", type=int, default=500, help="Target number of document chunks (not books)"
+    )
     parser.add_argument("--output", type=str, default="data/raw/gutenberg.jsonl")
     args = parser.parse_args()
 

@@ -9,9 +9,9 @@ engine = create_async_engine(
     settings.database_url,
     pool_size=10,
     max_overflow=20,
-    pool_pre_ping=True,   # validates connections before use — catches stale connections
-    pool_recycle=3600,    # recycle connections every hour
-    echo=False,           # never True in production (leaks query internals to logs)
+    pool_pre_ping=True,  # validates connections before use — catches stale connections
+    pool_recycle=3600,  # recycle connections every hour
+    echo=False,  # never True in production (leaks query internals to logs)
 )
 
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
@@ -19,6 +19,7 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy ORM models."""
+
     pass
 
 

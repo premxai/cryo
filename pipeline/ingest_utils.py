@@ -55,7 +55,7 @@ def exponential_backoff(
             return fn()
         except Exception as exc:
             last_exc = exc
-            delay = base_delay * (2 ** attempt)
+            delay = base_delay * (2**attempt)
             print(f"  Retry {attempt + 1}/{max_retries} in {delay:.0f}s: {exc}")
             time.sleep(delay)
     raise RuntimeError(f"Failed after {max_retries} retries") from last_exc

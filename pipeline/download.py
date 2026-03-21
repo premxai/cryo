@@ -134,7 +134,7 @@ def stream_with_retry(max_retries: int = 5):
                 streaming=True,
             )
         except Exception as exc:
-            wait = 2 ** attempt
+            wait = 2**attempt
             print(f"[download] Stream attempt {attempt + 1} failed: {exc}. Retrying in {wait}s...")
             time.sleep(wait)
     raise RuntimeError("Failed to connect to FineWeb after max retries.")
@@ -200,7 +200,9 @@ def download(limit: int, output_dir: str, resume: bool) -> None:
         total_saved += len(current_batch)
         save_checkpoint(total_saved)
 
-    print(f"\n[download] Done. {total_saved} docs saved. {skipped} skipped. Scanned {total_scanned}.")
+    print(
+        f"\n[download] Done. {total_saved} docs saved. {skipped} skipped. Scanned {total_scanned}."
+    )
 
 
 def main() -> None:

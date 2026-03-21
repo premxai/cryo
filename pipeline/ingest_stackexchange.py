@@ -21,8 +21,10 @@ from pathlib import Path
 
 try:
     import sys
+
     sys.path.insert(0, ".")
     from backend.config import settings
+
     SE_API_KEY = getattr(settings, "se_api_key", "")
 except Exception:
     SE_API_KEY = ""
@@ -40,12 +42,13 @@ from pipeline.ingest_utils import (
 
 try:
     from tqdm import tqdm
+
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
 
 SE_BASE = "https://api.stackexchange.com/2.3"
-PRE_2022_TS = 1640995200   # 2022-01-01 00:00:00 UTC
+PRE_2022_TS = 1640995200  # 2022-01-01 00:00:00 UTC
 MIN_SCORE = 10
 MIN_WORDS = 100
 CHECKPOINT_EVERY = 200
@@ -58,9 +61,12 @@ def se_get(endpoint: str, params: dict) -> dict:
         params["key"] = SE_API_KEY
     params["filter"] = "withbody"
     url = f"{SE_BASE}/{endpoint}?{urllib.parse.urlencode(params)}"
-    req = urllib.request.Request(url, headers={"Accept-Encoding": "gzip", "User-Agent": "CryoBot/1.0"})
+    req = urllib.request.Request(
+        url, headers={"Accept-Encoding": "gzip", "User-Agent": "CryoBot/1.0"}
+    )
     with urllib.request.urlopen(req, timeout=15) as resp:
         import gzip
+
         raw = resp.read()
         if resp.info().get("Content-Encoding") == "gzip":
             raw = gzip.decompress(raw)
@@ -70,31 +76,38 @@ def se_get(endpoint: str, params: dict) -> dict:
 def ts_to_parts(unix_ts: int) -> tuple[int, int, int]:
     """Convert unix timestamp to (year, month, day)."""
     import time as t
+
     st = t.gmtime(unix_ts)
     return st.tm_year, st.tm_mon, st.tm_mday
 
 
 def fetch_question_page(page: int, site: str) -> dict:
     """Fetch one page of high-voted answered pre-2022 questions."""
-    return se_get("questions", {
-        "order": "desc",
-        "sort": "votes",
-        "site": site,
-        "pagesize": PAGE_SIZE,
-        "page": page,
-        "min": MIN_SCORE,
-        "todate": PRE_2022_TS,
-        "answers": "True",
-    })
+    return se_get(
+        "questions",
+        {
+            "order": "desc",
+            "sort": "votes",
+            "site": site,
+            "pagesize": PAGE_SIZE,
+            "page": page,
+            "min": MIN_SCORE,
+            "todate": PRE_2022_TS,
+            "answers": "True",
+        },
+    )
 
 
 def fetch_accepted_answer(answer_id: int, site: str) -> str:
     """Fetch the body of an accepted answer."""
-    data = se_get(f"answers/{answer_id}", {
-        "site": site,
-        "order": "desc",
-        "sort": "activity",
-    })
+    data = se_get(
+        f"answers/{answer_id}",
+        {
+            "site": site,
+            "order": "desc",
+            "sort": "activity",
+        },
+    )
     items = data.get("items", [])
     if not items:
         return ""
@@ -214,8 +227,12 @@ def main() -> None:
     """Entry point."""
     parser = argparse.ArgumentParser(description="Ingest Stack Exchange into Cryo.")
     parser.add_argument("--limit", type=int, default=5000)
-    parser.add_argument("--site", type=str, default="stackoverflow",
-                        help="SE site name (stackoverflow, serverfault, etc.)")
+    parser.add_argument(
+        "--site",
+        type=str,
+        default="stackoverflow",
+        help="SE site name (stackoverflow, serverfault, etc.)",
+    )
     parser.add_argument("--output", type=str, default="data/raw/stackexchange.jsonl")
     args = parser.parse_args()
 

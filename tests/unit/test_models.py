@@ -141,8 +141,12 @@ class TestSearchResult:
 
     def test_human_score_valid(self):
         r = SearchResult(
-            id="x", url="https://example.com", text_preview="t",
-            timestamp="20200101", year=2020, domain="example.com",
+            id="x",
+            url="https://example.com",
+            text_preview="t",
+            timestamp="20200101",
+            year=2020,
+            domain="example.com",
             human_score=0.92,
         )
         assert r.human_score == 0.92
@@ -150,7 +154,11 @@ class TestSearchResult:
     def test_human_score_out_of_range_raises(self):
         with pytest.raises(ValidationError):
             SearchResult(
-                id="x", url="https://example.com", text_preview="t",
-                timestamp="20200101", year=2020, domain="example.com",
+                id="x",
+                url="https://example.com",
+                text_preview="t",
+                timestamp="20200101",
+                year=2020,
+                domain="example.com",
                 human_score=1.5,
             )

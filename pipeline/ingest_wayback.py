@@ -28,22 +28,24 @@ from pipeline.ingest_utils import (
 
 try:
     from tqdm import tqdm
+
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
 
 try:
     import trafilatura
+
     HAS_TRAFILATURA = True
 except ImportError:
     HAS_TRAFILATURA = False
 
 CDX_BASE = "https://web.archive.org/cdx/search/cdx"
 WAYBACK_BASE = "https://web.archive.org/web"
-CDX_DELAY = 1.0       # seconds between CDX calls
-CONTENT_DELAY = 2.5   # seconds between content fetches
-DOMAIN_PAUSE = 5.0    # seconds between domains
-MIN_WORDS = 200       # minimum words to keep a document
+CDX_DELAY = 1.0  # seconds between CDX calls
+CONTENT_DELAY = 2.5  # seconds between content fetches
+DOMAIN_PAUSE = 5.0  # seconds between domains
+MIN_WORDS = 200  # minimum words to keep a document
 CHECKPOINT_EVERY = 30
 BACKOFF_ON_429 = 30.0  # start backoff at 30s on rate limit (not 1s)
 
@@ -152,14 +154,14 @@ def _get_with_backoff(url: str, max_retries: int = 5) -> bytes | None:
             return _get(url)
         except urllib.error.HTTPError as exc:
             if exc.code in (429, 503):
-                wait = delay * (2 ** attempt)
+                wait = delay * (2**attempt)
                 print(f"[wayback] Rate limited ({exc.code}), waiting {wait:.0f}s...")
                 time.sleep(wait)
             else:
                 return None
         except Exception:
             if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
             else:
                 return None
     return None
@@ -167,17 +169,17 @@ def _get_with_backoff(url: str, max_retries: int = 5) -> bytes | None:
 
 # URL path patterns that indicate junk/non-article content
 _JUNK_PATH_RE = re.compile(
-    r"(^/?$"                        # homepage
-    r"|utm_"                        # tracking URLs
-    r"|[?#]"                        # query strings / anchors
+    r"(^/?$"  # homepage
+    r"|utm_"  # tracking URLs
+    r"|[?#]"  # query strings / anchors
     r"|\.(css|js|json|xml|rss|ico|png|jpg|gif|pdf|zip)$"  # static assets
-    r"|/tag/"                       # tag pages
-    r"|/category/"                  # category pages
-    r"|/page/\d+"                   # pagination
-    r"|/author/"                    # author pages
-    r"|/search/"                    # search pages
-    r"|/wp-content/"                # WordPress assets
-    r"|/%20"                        # URL encoding artifacts
+    r"|/tag/"  # tag pages
+    r"|/category/"  # category pages
+    r"|/page/\d+"  # pagination
+    r"|/author/"  # author pages
+    r"|/search/"  # search pages
+    r"|/wp-content/"  # WordPress assets
+    r"|/%20"  # URL encoding artifacts
     r")",
     re.IGNORECASE,
 )
@@ -217,16 +219,19 @@ def _is_article_url(url: str) -> bool:
 
 def fetch_cdx_urls(domain: str, limit: int = 300) -> list[tuple[str, str]]:
     """Return (original_url, timestamp) pairs from CDX API for a domain."""
-    params = urllib.parse.urlencode({
-        "url": f"{domain}/*",
-        "output": "json",
-        "from": "20150101",
-        "to": "20211231",
-        "fl": "original,timestamp",
-        "filter": ["statuscode:200", "mimetype:text/html"],
-        "limit": str(limit),
-        "collapse": "urlkey",
-    }, doseq=True)
+    params = urllib.parse.urlencode(
+        {
+            "url": f"{domain}/*",
+            "output": "json",
+            "from": "20150101",
+            "to": "20211231",
+            "fl": "original,timestamp",
+            "filter": ["statuscode:200", "mimetype:text/html"],
+            "limit": str(limit),
+            "collapse": "urlkey",
+        },
+        doseq=True,
+    )
     url = f"{CDX_BASE}?{params}"
     raw = _get_with_backoff(url)
     if not raw:
@@ -429,17 +434,16 @@ def parse_domains(arg: str | None) -> list[str]:
 
 def main() -> None:
     """Entry point."""
-    parser = argparse.ArgumentParser(
-        description="Ingest pre-2022 web content via Wayback Machine."
-    )
+    parser = argparse.ArgumentParser(description="Ingest pre-2022 web content via Wayback Machine.")
     parser.add_argument(
         "--domains",
         type=str,
         default=None,
         help="Comma-separated categories (food,health,sports,...) or domains. Default: all.",
     )
-    parser.add_argument("--limit", type=int, default=300,
-                        help="Total docs to collect across all domains.")
+    parser.add_argument(
+        "--limit", type=int, default=300, help="Total docs to collect across all domains."
+    )
     parser.add_argument("--output", type=str, default="data/raw/wayback_all.jsonl")
     args = parser.parse_args()
 

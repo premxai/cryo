@@ -53,7 +53,7 @@ def _build_sort(sort: str) -> list[str]:
         return ["year:desc"]
     if sort == "date_asc":
         return ["year:asc"]
-    return []   # relevance = Meilisearch default ranking
+    return []  # relevance = Meilisearch default ranking
 
 
 def _parse_facets(raw_facets: dict) -> dict[str, list[FacetCount]]:
@@ -75,7 +75,7 @@ def _hit_to_result(h: dict) -> SearchResult:
     return SearchResult(
         id=h["id"],
         url=h.get("url", ""),
-        text_preview=preview[:600],   # allow more room for highlighted snippets
+        text_preview=preview[:600],  # allow more room for highlighted snippets
         timestamp=h.get("timestamp", ""),
         year=h.get("year", 0),
         domain=h.get("domain", ""),
@@ -106,7 +106,14 @@ def keyword_search(params: SearchQuery) -> SearchResponse:
         "filter": _build_filter(params),
         "facets": ["domain", "year", "content_type"],
         "attributesToRetrieve": [
-            "id", "url", "text_preview", "timestamp", "year", "domain", "word_count", "content_type",
+            "id",
+            "url",
+            "text_preview",
+            "timestamp",
+            "year",
+            "domain",
+            "word_count",
+            "content_type",
         ],
         "attributesToHighlight": ["text_preview"],
         "highlightPreTag": "<mark>",
@@ -165,12 +172,15 @@ def suggest_completions(q: str, limit: int = 8) -> list[str]:
     try:
         client = get_meili_client()
         index = client.index(INDEX_NAME)
-        raw = index.search(q, {
-            "limit": limit * 2,
-            "attributesToRetrieve": ["text_preview"],
-            "attributesToHighlight": [],
-            "facets": ["domain"],
-        })
+        raw = index.search(
+            q,
+            {
+                "limit": limit * 2,
+                "attributesToRetrieve": ["text_preview"],
+                "attributesToHighlight": [],
+                "facets": ["domain"],
+            },
+        )
         # Extract unique multi-word phrases from previews that start with q
         suggestions: list[str] = []
         q_lower = q.lower()
@@ -204,10 +214,13 @@ def get_facet_counts(q: str = "") -> dict[str, list[FacetCount]]:
     try:
         client = get_meili_client()
         index = client.index(INDEX_NAME)
-        raw = index.search(q or "", {
-            "limit": 0,
-            "facets": ["domain", "year", "content_type"],
-        })
+        raw = index.search(
+            q or "",
+            {
+                "limit": 0,
+                "facets": ["domain", "year", "content_type"],
+            },
+        )
         return _parse_facets(raw.get("facetDistribution") or {})
     except Exception as exc:
         logger.warning("cryo.search.facets_error", q=q, error=str(exc))
