@@ -1,6 +1,5 @@
 /**
- * FilterSidebar — collapsible filter panel with year range, domain, content type.
- * Emits changes via onFilterChange({ yearMin, yearMax, domain, contentType }).
+ * FilterSidebar — glass filter panel.
  */
 
 import { useState } from "react";
@@ -35,20 +34,20 @@ export default function FilterSidebar({ filters, facets, onFilterChange, onSortC
     filters.contentType;
 
   return (
-    <aside className="w-56 shrink-0">
+    <aside className="w-52 shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-2 text-xs text-[#4a5568] hover:text-[#a0aec0] transition-colors"
+          className="flex items-center gap-2 text-xs text-white/25 hover:text-white/50 transition-colors font-light tracking-widest uppercase"
         >
-          <span>{collapsed ? "▶" : "▼"}</span>
-          <span className="uppercase tracking-widest">Filters</span>
+          <span className="text-[10px]">{collapsed ? "▶" : "▼"}</span>
+          Filters
         </button>
         {hasActiveFilters && (
           <button
             onClick={() => onFilterChange({ yearMin: 2000, yearMax: 2021, domain: "", contentType: "" })}
-            className="text-xs text-[#4a9eff] hover:underline"
+            className="text-xs text-[#4a9eff]/60 hover:text-[#4a9eff] transition-colors font-light"
           >
             Clear
           </button>
@@ -57,21 +56,21 @@ export default function FilterSidebar({ filters, facets, onFilterChange, onSortC
 
       {!collapsed && (
         <div className="space-y-6">
+
           {/* Sort */}
           <div>
-            <div className="text-xs text-[#4a5568] uppercase tracking-widest mb-2">Sort By</div>
-            <div className="space-y-1">
+            <div className="text-[10px] text-white/20 uppercase tracking-widest mb-2 font-light">Sort By</div>
+            <div className="space-y-0.5">
               {SORT_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => onSortChange(opt.value)}
-                  className={`w-full text-left text-sm px-2 py-1 transition-colors ${
+                  className={`w-full text-left text-sm px-2 py-1.5 rounded-lg transition-colors font-light ${
                     sort === opt.value
-                      ? "text-[#4a9eff] bg-[#0d1525]"
-                      : "text-[#a0aec0] hover:text-[#e8edf5]"
+                      ? "text-white/80 bg-white/5"
+                      : "text-white/30 hover:text-white/60"
                   }`}
                 >
-                  {sort === opt.value && <span className="mr-1">›</span>}
                   {opt.label}
                 </button>
               ))}
@@ -80,7 +79,7 @@ export default function FilterSidebar({ filters, facets, onFilterChange, onSortC
 
           {/* Year range */}
           <div>
-            <div className="text-xs text-[#4a5568] uppercase tracking-widest mb-2">Year Range</div>
+            <div className="text-[10px] text-white/20 uppercase tracking-widest mb-2 font-light">Year Range</div>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -88,37 +87,38 @@ export default function FilterSidebar({ filters, facets, onFilterChange, onSortC
                 max={2021}
                 value={filters.yearMin}
                 onChange={(e) => update("yearMin", parseInt(e.target.value) || 2000)}
-                className="w-20 bg-[#0d1525] border border-[#1e2d45] text-[#e8edf5] text-sm
-                           px-2 py-1 focus:outline-none focus:border-[#4a9eff]"
+                className="w-20 bg-white/5 text-white/60 text-sm rounded-lg
+                           px-2 py-1.5 focus:outline-none focus:bg-white/8
+                           border-none font-light"
               />
-              <span className="text-[#4a5568] text-xs">–</span>
+              <span className="text-white/20 text-xs">–</span>
               <input
                 type="number"
                 min={2000}
                 max={2021}
                 value={filters.yearMax}
                 onChange={(e) => update("yearMax", parseInt(e.target.value) || 2021)}
-                className="w-20 bg-[#0d1525] border border-[#1e2d45] text-[#e8edf5] text-sm
-                           px-2 py-1 focus:outline-none focus:border-[#4a9eff]"
+                className="w-20 bg-white/5 text-white/60 text-sm rounded-lg
+                           px-2 py-1.5 focus:outline-none focus:bg-white/8
+                           border-none font-light"
               />
             </div>
           </div>
 
           {/* Content type */}
           <div>
-            <div className="text-xs text-[#4a5568] uppercase tracking-widest mb-2">Content Type</div>
-            <div className="space-y-1">
+            <div className="text-[10px] text-white/20 uppercase tracking-widest mb-2 font-light">Content Type</div>
+            <div className="space-y-0.5">
               {CONTENT_TYPES.map((ct) => (
                 <button
                   key={ct.value}
                   onClick={() => update("contentType", ct.value)}
-                  className={`w-full text-left text-sm px-2 py-1 transition-colors ${
+                  className={`w-full text-left text-sm px-2 py-1.5 rounded-lg transition-colors font-light ${
                     filters.contentType === ct.value
-                      ? "text-[#4a9eff]"
-                      : "text-[#a0aec0] hover:text-[#e8edf5]"
+                      ? "text-white/80 bg-white/5"
+                      : "text-white/30 hover:text-white/60"
                   }`}
                 >
-                  {filters.contentType === ct.value && <span className="mr-1">›</span>}
                   {ct.label}
                 </button>
               ))}
@@ -128,12 +128,12 @@ export default function FilterSidebar({ filters, facets, onFilterChange, onSortC
           {/* Top domains */}
           {domainFacets.length > 0 && (
             <div>
-              <div className="text-xs text-[#4a5568] uppercase tracking-widest mb-2">Top Sources</div>
-              <div className="space-y-1">
+              <div className="text-[10px] text-white/20 uppercase tracking-widest mb-2 font-light">Top Sources</div>
+              <div className="space-y-0.5">
                 <button
                   onClick={() => update("domain", "")}
-                  className={`w-full text-left text-sm px-2 py-1 transition-colors ${
-                    !filters.domain ? "text-[#4a9eff]" : "text-[#a0aec0] hover:text-[#e8edf5]"
+                  className={`w-full text-left text-sm px-2 py-1.5 rounded-lg transition-colors font-light ${
+                    !filters.domain ? "text-white/80 bg-white/5" : "text-white/30 hover:text-white/60"
                   }`}
                 >
                   All sources
@@ -142,20 +142,21 @@ export default function FilterSidebar({ filters, facets, onFilterChange, onSortC
                   <button
                     key={f.value}
                     onClick={() => update("domain", filters.domain === f.value ? "" : f.value)}
-                    className={`w-full text-left text-sm px-2 py-1 flex justify-between items-center
-                                transition-colors ${
+                    className={`w-full text-left text-sm px-2 py-1.5 rounded-lg flex justify-between items-center
+                                transition-colors font-light ${
                       filters.domain === f.value
-                        ? "text-[#4a9eff]"
-                        : "text-[#a0aec0] hover:text-[#e8edf5]"
+                        ? "text-white/80 bg-white/5"
+                        : "text-white/30 hover:text-white/60"
                     }`}
                   >
-                    <span className="truncate max-w-[130px]">{f.value}</span>
-                    <span className="text-[#4a5568] text-xs ml-1">{f.count}</span>
+                    <span className="truncate max-w-[120px]">{f.value}</span>
+                    <span className="text-white/20 text-xs ml-1">{f.count}</span>
                   </button>
                 ))}
               </div>
             </div>
           )}
+
         </div>
       )}
     </aside>

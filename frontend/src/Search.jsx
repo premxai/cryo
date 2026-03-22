@@ -43,11 +43,11 @@ function writeUrlState(state) {
 
 function ResultSkeleton() {
   return (
-    <div className="border-b border-[#1e2d45] pb-6 pt-4 animate-pulse">
-      <div className="h-3 w-48 bg-[#1e2d45] mb-3" />
-      <div className="h-4 w-3/4 bg-[#1e2d45] mb-2" />
-      <div className="h-3 w-full bg-[#1a2535] mb-1" />
-      <div className="h-3 w-5/6 bg-[#1a2535]" />
+    <div className="liquid-glass rounded-xl px-5 py-4 mb-3 animate-pulse">
+      <div className="h-2.5 w-40 bg-white/5 rounded mb-3" />
+      <div className="h-3.5 w-3/4 bg-white/5 rounded mb-2" />
+      <div className="h-3 w-full bg-white/[0.03] rounded mb-1" />
+      <div className="h-3 w-5/6 bg-white/[0.03] rounded" />
     </div>
   );
 }
@@ -198,19 +198,28 @@ export default function Search() {
   const hasMore = results.length < total && results.length > 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Search input */}
-      <div className="mb-6">
+    <div className="w-full max-w-5xl mx-auto px-4">
+
+      {/* Hero heading + search */}
+      <div className="text-center mb-10">
+        <h1 className="gradient-heading text-5xl md:text-6xl mb-2 leading-tight">
+          The Human Web
+        </h1>
+        <p className="text-white/25 text-sm font-light tracking-wide mb-8">
+          Authenticated pre-2022 content · No AI · No noise
+        </p>
+
         <AutocompleteInput
           value={query}
           onChange={setQuery}
           onSearch={(q) => { setOffset(0); runSearch(q, filters, sort, 0, false); }}
           inputRef={inputRef}
         />
-        <div className="mt-1 text-[10px] text-[#2d3a4a] text-right select-none">
-          <kbd className="bg-[#1a2535] border border-[#1e2d45] px-1">/</kbd> focus ·{" "}
-          <kbd className="bg-[#1a2535] border border-[#1e2d45] px-1">↑↓</kbd> navigate ·{" "}
-          <kbd className="bg-[#1a2535] border border-[#1e2d45] px-1">↵</kbd> open
+
+        <div className="mt-2.5 text-[10px] text-white/15 text-right select-none font-light">
+          <kbd>/</kbd> focus ·{" "}
+          <kbd>↑↓</kbd> navigate ·{" "}
+          <kbd>↵</kbd> open
         </div>
       </div>
 
@@ -226,19 +235,20 @@ export default function Search() {
 
         {/* Results */}
         <div className="flex-1 min-w-0">
+
           {/* Stats */}
           {!loading && query && searchTimeMs !== null && (
-            <div className="text-xs text-[#4a5568] mb-5">
-              <span className="text-[#a0aec0] font-mono">{total.toLocaleString()}</span> results in{" "}
-              <span className="text-[#a0aec0] font-mono">{searchTimeMs}ms</span>
+            <div className="text-xs text-white/20 mb-4 font-light">
+              <span className="text-white/40">{total.toLocaleString()}</span> results in{" "}
+              <span className="text-white/40">{searchTimeMs}ms</span>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="border border-red-900/50 bg-red-950/10 p-4 text-sm text-red-400 mb-6">
+            <div className="liquid-glass rounded-xl p-4 text-sm text-red-400/80 mb-4 font-light">
               {error}
-              <button onClick={() => runSearch(query, filters, sort, 0, false)} className="ml-3 underline">
+              <button onClick={() => runSearch(query, filters, sort, 0, false)} className="ml-3 text-white/40 hover:text-white/70 underline transition-colors">
                 Retry
               </button>
             </div>
@@ -246,7 +256,7 @@ export default function Search() {
 
           {/* Skeletons */}
           {loading && (
-            <div className="space-y-0 divide-y divide-[#1e2d45]">
+            <div>
               {Array.from({ length: 5 }).map((_, i) => <ResultSkeleton key={i} />)}
             </div>
           )}
@@ -259,9 +269,7 @@ export default function Search() {
                   <div
                     key={result.id}
                     ref={(el) => (resultRefs.current[i] = el)}
-                    className={`transition-colors duration-100 ${
-                      focusedIndex === i ? "bg-[#0c1420]" : ""
-                    }`}
+                    className={focusedIndex === i ? "ring-1 ring-white/10 rounded-xl" : ""}
                     onMouseEnter={() => setFocusedIndex(i)}
                   >
                     <ResultCard result={result} query={query} />
@@ -273,23 +281,24 @@ export default function Search() {
 
           {/* Zero results */}
           {!loading && !error && query && results.length === 0 && searchTimeMs !== null && (
-            <div className="text-center py-16 text-[#4a5568]">
-              <div className="text-3xl mb-3 opacity-40">∅</div>
-              <div className="text-sm mb-1">
-                No results for <span className="text-[#a0aec0]">"{query}"</span>
+            <div className="text-center py-20 select-none">
+              <div className="text-4xl mb-4 opacity-20">∅</div>
+              <div className="text-sm text-white/30 font-light mb-1">
+                No results for <span className="text-white/50">"{query}"</span>
               </div>
-              <div className="text-xs mt-1">Try broader terms or adjust filters.</div>
+              <div className="text-xs text-white/15 font-light">Try broader terms or adjust filters.</div>
             </div>
           )}
 
           {/* Load more */}
           {!loading && hasMore && (
-            <div className="mt-10 text-center">
+            <div className="mt-8 text-center">
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="border border-[#1e2d45] text-[#a0aec0] hover:border-[#4a9eff] hover:text-[#4a9eff]
-                           px-8 py-2 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="liquid-glass rounded-full px-8 py-2.5 text-sm text-white/40
+                           hover:text-white/70 transition-colors font-light
+                           disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 {loadingMore ? "Loading…" : `Load more · ${total - results.length} remaining`}
               </button>
@@ -298,12 +307,13 @@ export default function Search() {
 
           {/* Empty state */}
           {!query && !loading && (
-            <div className="text-center py-24 select-none">
-              <div className="text-5xl mb-5 opacity-10">❄</div>
-              <div className="text-sm text-[#2d3a4a]">The human web. Preserved.</div>
-              <div className="text-xs text-[#1e2d45] mt-2">Pre-2022 · BM25 search · No AI content</div>
+            <div className="text-center py-28 select-none">
+              <div className="text-6xl mb-6 opacity-[0.06]">❄</div>
+              <div className="text-sm text-white/15 font-light">The human web. Preserved.</div>
+              <div className="text-xs text-white/8 font-light mt-2">Pre-2022 · BM25 search · No AI content</div>
             </div>
           )}
+
         </div>
       </div>
     </div>

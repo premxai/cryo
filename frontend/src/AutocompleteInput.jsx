@@ -1,8 +1,5 @@
 /**
- * AutocompleteInput — search bar with suggestion dropdown.
- *
- * Uses native focus/blur handling instead of Headless UI
- * to avoid version compatibility issues.
+ * AutocompleteInput — liquid glass search bar with suggestion dropdown.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -18,7 +15,6 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
   const localRef = useRef(null);
   const inputEl = externalRef || localRef;
 
-  // Fetch suggestions with 150ms debounce
   useEffect(() => {
     if (!value || value.length < 2) {
       setSuggestions([]);
@@ -43,7 +39,6 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
     return () => clearTimeout(suggestTimerRef.current);
   }, [value]);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -80,7 +75,7 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <div className="relative">
+      <div className="relative liquid-glass-strong rounded-2xl">
         <input
           ref={inputEl}
           type="text"
@@ -88,19 +83,19 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
-          placeholder="Search the human web... (press / to focus)"
+          placeholder="Search the human web..."
           autoComplete="off"
           spellCheck="false"
-          className="w-full bg-[#0d1525] border border-[#1e2d45] text-[#e8edf5] placeholder-[#4a5568]
-                     px-5 py-3 text-base focus:outline-none focus:border-[#4a9eff]
-                     transition-colors duration-150"
-          style={{ fontFamily: "monospace" }}
+          className="w-full bg-transparent text-white placeholder-white/25
+                     px-6 py-4 text-base focus:outline-none rounded-2xl
+                     font-light tracking-wide"
+          style={{ fontFamily: 'var(--font-body)' }}
         />
         {value && (
           <button
             onClick={() => { onChange(""); setSuggestions([]); setOpen(false); inputEl.current?.focus(); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4a5568] hover:text-[#e8edf5]
-                       text-lg leading-none transition-colors"
+            className="absolute right-5 top-1/2 -translate-y-1/2 text-white/30
+                       hover:text-white/70 text-xl leading-none transition-colors"
             aria-label="Clear search"
           >
             ×
@@ -110,7 +105,7 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
 
       {open && suggestions.length > 0 && (
         <ul
-          className="absolute z-50 w-full bg-[#0d1525] border border-[#1e2d45] border-t-0 shadow-xl"
+          className="absolute z-50 w-full mt-2 liquid-glass-strong rounded-xl overflow-hidden shadow-2xl"
           role="listbox"
         >
           {suggestions.map((s, i) => (
@@ -120,13 +115,13 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
               aria-selected={i === activeIndex}
               onMouseDown={() => selectSuggestion(s)}
               onMouseEnter={() => setActiveIndex(i)}
-              className={`px-5 py-2 text-sm cursor-pointer transition-colors ${
+              className={`px-5 py-2.5 text-sm cursor-pointer transition-colors font-light ${
                 i === activeIndex
-                  ? "bg-[#1e2d45] text-[#4a9eff]"
-                  : "text-[#a0aec0] hover:bg-[#1a2535]"
+                  ? "bg-white/10 text-white"
+                  : "text-white/50 hover:bg-white/5 hover:text-white/80"
               }`}
             >
-              <span className="mr-2 text-[#4a5568]">↗</span>
+              <span className="mr-2 text-white/20">↗</span>
               {s}
             </li>
           ))}
