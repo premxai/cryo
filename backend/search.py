@@ -23,9 +23,16 @@ def _get_embed_model():
     global _embed_model
     if _embed_model is None:
         try:
+            import os
+
             from fastembed import TextEmbedding
 
-            _embed_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+            os.environ.setdefault("FASTEMBED_CACHE_PATH", "/tmp/fastembed_cache")
+            os.makedirs("/tmp/fastembed_cache", exist_ok=True)
+            _embed_model = TextEmbedding(
+                model_name="BAAI/bge-small-en-v1.5",
+                cache_dir="/tmp/fastembed_cache",
+            )
             logger.info("cryo.search.embed_model_loaded", model="BAAI/bge-small-en-v1.5")
         except Exception as exc:
             logger.warning("cryo.search.embed_unavailable", error=str(exc))
