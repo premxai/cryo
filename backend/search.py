@@ -1,6 +1,7 @@
-"""Search logic — Meilisearch keyword search (M1). Qdrant semantic search added in M3."""
+"""Search logic — BM25 keyword search (Meilisearch) + semantic re-ranking (fastembed)."""
 
 import time
+from typing import Any
 
 import meilisearch
 import structlog
@@ -11,8 +12,48 @@ from backend.models import FacetCount, SearchQuery, SearchResponse, SearchResult
 logger = structlog.get_logger()
 
 INDEX_NAME = "cryo_docs"
+RERANK_CANDIDATES = 50  # fetch this many from BM25, re-rank, return top N
 
 _meili_client: meilisearch.Client | None = None
+_embed_model: Any = None  # lazy-loaded fastembed model
+
+
+def _get_embed_model():
+    """Lazily load the fastembed model (downloads ~40MB on first call)."""
+    global _embed_model
+    if _embed_model is None:
+        try:
+            from fastembed import TextEmbedding
+
+            _embed_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+            logger.info("cryo.search.embed_model_loaded", model="BAAI/bge-small-en-v1.5")
+        except Exception as exc:
+            logger.warning("cryo.search.embed_unavailable", error=str(exc))
+            _embed_model = None
+    return _embed_model
+
+
+def _cosine_scores(query: str, texts: list[str]) -> list[float]:
+    """Return cosine similarity scores between query and each text. Falls back to 0.0."""
+    model = _get_embed_model()
+    if model is None or not texts:
+        return [0.0] * len(texts)
+    try:
+        import numpy as np
+
+        all_texts = [query] + texts
+        vecs = list(model.embed(all_texts))
+        q_vec = np.array(vecs[0])
+        doc_vecs = np.array(vecs[1:])
+        q_norm = np.linalg.norm(q_vec)
+        doc_norms = np.linalg.norm(doc_vecs, axis=1)
+        if q_norm == 0:
+            return [0.0] * len(texts)
+        sims = doc_vecs @ q_vec / (doc_norms * q_norm + 1e-9)
+        return sims.tolist()
+    except Exception as exc:
+        logger.warning("cryo.search.rerank_error", error=str(exc))
+        return [0.0] * len(texts)
 
 
 def get_meili_client() -> meilisearch.Client:
@@ -85,10 +126,10 @@ def _hit_to_result(h: dict) -> SearchResult:
 
 
 def keyword_search(params: SearchQuery) -> SearchResponse:
-    """BM25 keyword search over the pre-2022 corpus via Meilisearch.
+    """BM25 search with semantic re-ranking over the pre-2022 corpus.
 
-    Supports filtering by year range, domain, content_type; sorting by date or
-    relevance; pagination via offset; faceted counts; and term highlighting.
+    Fetches up to RERANK_CANDIDATES from Meilisearch, re-ranks by cosine
+    similarity using fastembed, then returns params.limit results.
 
     Args:
         params: Validated SearchQuery with all filter/sort/pagination options.
@@ -100,9 +141,13 @@ def keyword_search(params: SearchQuery) -> SearchResponse:
     index = client.index(INDEX_NAME)
     start_ms = int(time.time() * 1000)
 
+    # Fetch more candidates when re-ranking by relevance
+    use_rerank = params.sort == "relevance"
+    fetch_limit = RERANK_CANDIDATES if use_rerank else params.limit
+
     search_params: dict = {
-        "limit": params.limit,
-        "offset": params.offset,
+        "limit": fetch_limit,
+        "offset": params.offset if not use_rerank else 0,
         "filter": _build_filter(params),
         "facets": ["domain", "year", "content_type"],
         "attributesToRetrieve": [
@@ -132,8 +177,26 @@ def keyword_search(params: SearchQuery) -> SearchResponse:
         logger.error("cryo.search.meili_error", query=params.q, error=str(exc))
         raise
 
-    elapsed = int(time.time() * 1000) - start_ms
     hits = raw.get("hits", [])
+
+    # Semantic re-ranking — only on relevance sort
+    if use_rerank and hits and _get_embed_model() is not None:
+        texts = [h.get("text_preview", "") or "" for h in hits]
+        scores = _cosine_scores(params.q, texts)
+        # Combine: 0.5 × BM25_rank_score + 0.5 × cosine_sim
+        n = len(hits)
+        ranked = sorted(
+            ((h, s, i) for i, (h, s) in enumerate(zip(hits, scores, strict=True))),
+            key=lambda t: 0.5 * (1 - t[2] / n) + 0.5 * t[1],
+            reverse=True,
+        )
+        hits = [h for h, _, _ in ranked]
+        # Apply pagination after re-ranking
+        hits = hits[params.offset : params.offset + params.limit]
+    else:
+        hits = hits[: params.limit]
+
+    elapsed = int(time.time() * 1000) - start_ms
     results = [_hit_to_result(h) for h in hits]
     facets = _parse_facets(raw.get("facetDistribution") or {})
 
@@ -145,6 +208,7 @@ def keyword_search(params: SearchQuery) -> SearchResponse:
         elapsed_ms=elapsed,
         offset=params.offset,
         sort=params.sort,
+        reranked=use_rerank,
     )
 
     return SearchResponse(

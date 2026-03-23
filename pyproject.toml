@@ -32,6 +32,8 @@ dependencies = [
     "tqdm>=4.66",
     "python-dotenv>=1.0.1",
     "mwparserfromhell>=0.6.6",
+    # Semantic re-ranking (lightweight CPU inference)
+    "fastembed>=0.3.0",
 ]
 
 [project.optional-dependencies]
