@@ -94,6 +94,19 @@ def stream_docs(data_path: Path):
                         continue
 
 
+def _add_batch(index: meilisearch.index.Index, batch: list[dict]) -> None:
+    """Add a batch of docs, splitting in half on malformed_payload to skip bad docs."""
+    try:
+        index.add_documents(batch)
+    except meilisearch.errors.MeilisearchApiError as exc:
+        if "malformed_payload" not in str(exc) or len(batch) <= 1:
+            print(f"  [warn] skipping {len(batch)} docs: {exc}")
+            return
+        mid = len(batch) // 2
+        _add_batch(index, batch[:mid])
+        _add_batch(index, batch[mid:])
+
+
 def index_documents(data_path: str, batch_size: int) -> None:
     """Main indexing loop — reads JSONL files and bulk-inserts into Meilisearch."""
     path = Path(data_path)
@@ -106,13 +119,16 @@ def index_documents(data_path: str, batch_size: int) -> None:
 
     with tqdm(desc="Indexing docs", unit="doc") as pbar:
         for doc in stream_docs(path):
-            # Compute text_preview; ensure content_type has a default
-            doc["text_preview"] = doc["text"][:300]
+            # Strip null bytes / control chars that break Meilisearch's JSON parser
+            text = doc.get("text", "") or ""
+            text = text.replace("\x00", "").replace("\r", " ")
+            doc["text"] = text
+            doc["text_preview"] = text[:300]
             doc.setdefault("content_type", "article")
             batch.append(doc)
 
             if len(batch) >= batch_size:
-                index.add_documents(batch)
+                _add_batch(index, batch)
                 total_indexed += len(batch)
                 pbar.update(len(batch))
                 batch_num += 1
@@ -123,7 +139,7 @@ def index_documents(data_path: str, batch_size: int) -> None:
 
         # Final partial batch
         if batch:
-            index.add_documents(batch)
+            _add_batch(index, batch)
             total_indexed += len(batch)
             pbar.update(len(batch))
 
