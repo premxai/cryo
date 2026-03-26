@@ -122,7 +122,8 @@ def index_documents(data_path: str, batch_size: int) -> None:
             # Strip null bytes / control chars that break Meilisearch's JSON parser
             text = doc.get("text", "") or ""
             text = text.replace("\x00", "").replace("\r", " ")
-            doc["text"] = text
+            # Truncate to 2000 chars — enough for BM25, keeps index ~10x smaller
+            doc["text"] = text[:2000]
             doc["text_preview"] = text[:300]
             doc.setdefault("content_type", "article")
             batch.append(doc)
