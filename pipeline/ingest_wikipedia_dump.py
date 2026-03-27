@@ -225,7 +225,7 @@ def ingest(dump_path: Path, output: Path, checkpoint_path: Path, limit: int | No
         for doc in docs:
             batch.append(doc)
             collected += 1
-            if pbar:
+            if pbar is not None:
                 pbar.update(1)
 
             if len(batch) >= BATCH_SIZE:
