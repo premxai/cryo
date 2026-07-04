@@ -53,6 +53,17 @@ class ApiKey(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class MagicLinkToken(Base):
+    """A single-use signup/login token — only the SHA-256 hash is stored."""
+
+    __tablename__ = "magic_link_tokens"
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class UsageLedger(Base):
     """Durable per-month, per-endpoint request counts — the future billing metering source."""
 

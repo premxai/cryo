@@ -43,9 +43,16 @@ cp nginx/nginx.conf /etc/nginx/nginx.conf
 nginx -t && systemctl reload nginx
 echo "Nginx configured."
 
-# ── 6. Start services ──────────────────────────────────────────────────────────
+# ── 6. Start databases, run migrations, then the backend ──────────────────────
 docker compose -f docker-compose.prod.yml pull || true
+docker compose -f docker-compose.prod.yml up -d postgres redis meilisearch
+docker compose -f docker-compose.prod.yml run --rm backend alembic upgrade head
 docker compose -f docker-compose.prod.yml up -d
+
+# One-time corpus load into the documents store (idempotent — safe to re-run)
+docker compose -f docker-compose.prod.yml exec -T backend \
+    python pipeline/load_documents_pg.py --data-path /app/data/raw || \
+    echo "⚠️  Corpus load skipped/failed — run manually if data/raw is mounted."
 
 echo ""
 echo "=== Done ==="

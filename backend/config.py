@@ -42,7 +42,10 @@ class Settings(BaseSettings):
 
     # Self-serve signup (Phase 4)
     resend_api_key: str = ""
-    public_base_url: str = ""
+    public_base_url: str = "http://localhost:5173"
+    session_secret: str = "dev_session_secret_change_me"
+    session_ttl_hours: int = 72
+    magic_link_ttl_minutes: int = 15
 
     # CORS — comma-separated origin list; falls back to env defaults when empty
     allowed_origins_env: str = Field(default="", validation_alias="ALLOWED_ORIGINS")

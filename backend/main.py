@@ -26,6 +26,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.auth_routes import router as auth_router
 from backend.api.v1 import router as v1_router
 from backend.auth.quota import close_redis, init_redis
 from backend.config import settings
@@ -170,6 +171,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # ── Routers ───────────────────────────────────────────────────────────────────
 
 app.include_router(v1_router)
+app.include_router(auth_router)
 
 # MCP server — Cryo as a native tool for Claude/agent frameworks (same API keys)
 app.mount("/mcp", mcp_asgi_app())

@@ -9,7 +9,7 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "gunicorn>=22.0",
     # Data validation + config
-    "pydantic>=2.7",
+    "pydantic[email]>=2.7",
     "pydantic-settings>=2.3",
     # Database (async)
     "sqlalchemy[asyncio]>=2.0.30",
