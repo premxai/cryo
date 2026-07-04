@@ -7,6 +7,7 @@ Redis so agents hammering a dead link don't hammer archive.org.
 
 import hashlib
 
+import anyio
 import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +19,40 @@ from backend.services.wayback import fetch_snapshot, url_to_domain
 from pipeline.ingest_utils import count_words, make_doc_id
 
 logger = structlog.get_logger()
+
+
+def _index_in_meili(doc: Document) -> None:
+    """Sync helper: add a live-fetched doc to the cryo_docs search index."""
+    from backend.search import INDEX_NAME, get_meili_client
+
+    text = doc.text.replace("\x00", "").replace("\r", " ")
+    get_meili_client().index(INDEX_NAME).add_documents(
+        [
+            {
+                "id": doc.id,
+                "url": doc.url,
+                "text": text[:2000],
+                "text_preview": text[:300],
+                "timestamp": doc.timestamp,
+                "year": doc.year,
+                "domain": doc.domain,
+                "word_count": doc.word_count,
+                "content_type": doc.content_type or "article",
+            }
+        ]
+    )
+
+
+async def index_document(doc: Document) -> None:
+    """Write a live-fetched doc through to Meilisearch so it becomes searchable.
+
+    Best-effort: a Meili failure never fails the user's /v1/contents request.
+    """
+    try:
+        await anyio.to_thread.run_sync(_index_in_meili, doc)
+        logger.info("cryo.contents.indexed", doc_id=doc.id, url=doc.url)
+    except Exception as exc:
+        logger.warning("cryo.contents.index_failed", doc_id=doc.id, error=str(exc))
 
 
 async def get_document_by_id(db: AsyncSession, doc_id: str) -> Document | None:
@@ -82,6 +117,7 @@ async def fetch_and_store(db: AsyncSession, url: str, timestamp: str | None) -> 
     db.add(doc)
     await db.commit()
     logger.info("cryo.contents.stored", url=url, doc_id=doc.id, words=doc.word_count)
+    await index_document(doc)  # the corpus grows where users browse
     return doc
 
 
