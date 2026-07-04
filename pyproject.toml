@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Authenticated human web search — pre-2022 corpus with RLAIF"
 requires-python = ">=3.11"
 dependencies = [
-    # Web framework
-    "fastapi>=0.115",
+    # Web framework (0.139+ required for starlette 1.x pulled in by mcp)
+    "fastapi>=0.139",
     "uvicorn[standard]>=0.30",
     "gunicorn>=22.0",
     # Data validation + config
@@ -19,7 +19,7 @@ dependencies = [
     "httpx>=0.27",
     # Observability
     "structlog>=24.2",
-    "prometheus-fastapi-instrumentator>=2.0",
+    "prometheus-fastapi-instrumentator>=8.0",
     # Rate limiting
     "fastapi-limiter>=0.1.6",
     # Cache + queue
@@ -34,6 +34,8 @@ dependencies = [
     "mwparserfromhell>=0.6.6",
     # Semantic re-ranking (lightweight CPU inference)
     "fastembed>=0.3.0",
+    # MCP server (Cryo as a native agent tool at /mcp)
+    "mcp>=1.28",
 ]
 
 [project.optional-dependencies]

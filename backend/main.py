@@ -32,6 +32,7 @@ from backend.config import settings
 from backend.db import close_db_pool, get_db, init_db_pool
 from backend.errors import APIError
 from backend.logging_config import configure_logging
+from backend.mcp_server import mcp, mcp_asgi_app
 from backend.models import (
     FacetCount,
     HealthResponse,
@@ -75,8 +76,11 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("cryo.startup.meili_ok", url=settings.meilisearch_url)
 
-    logger.info("cryo.startup.complete")
-    yield
+    # MCP streamable-HTTP session manager must run for the /mcp mount to serve
+    mcp.streamable_http_app()  # ensure the (lazy) session manager exists
+    async with mcp.session_manager.run():
+        logger.info("cryo.startup.complete")
+        yield
 
     # Shutdown
     await close_redis()
@@ -166,6 +170,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # ── Routers ───────────────────────────────────────────────────────────────────
 
 app.include_router(v1_router)
+
+# MCP server — Cryo as a native tool for Claude/agent frameworks (same API keys)
+app.mount("/mcp", mcp_asgi_app())
 
 
 # ── Legacy endpoints (unauthenticated — power the demo frontend) ──────────────
