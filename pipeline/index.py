@@ -12,7 +12,10 @@ Prerequisites:
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, ".")  # allow `python pipeline/index.py` from repo root
 
 import meilisearch
 from tqdm import tqdm

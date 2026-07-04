@@ -11,6 +11,9 @@ Prerequisites:
 
 import argparse
 import asyncio
+import sys
+
+sys.path.insert(0, ".")  # allow `python pipeline/issue_key.py` from repo root
 
 from sqlalchemy import select
 

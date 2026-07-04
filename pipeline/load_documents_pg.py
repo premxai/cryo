@@ -15,7 +15,10 @@ Prerequisites:
 import argparse
 import asyncio
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, ".")  # allow `python pipeline/load_documents_pg.py` from repo root
 
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from tqdm import tqdm
