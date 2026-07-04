@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class V1SearchRequest(BaseModel):
@@ -45,6 +45,78 @@ class V1SearchResponse(BaseModel):
 
     results: list[V1Result]
     total: int = Field(..., description="Estimated total matches in the corpus")
+    search_time_ms: int
+    request_id: str
+
+
+class V1ContentsRequest(BaseModel):
+    """POST /v1/contents request body — exactly one of ids or urls."""
+
+    ids: list[str] | None = Field(default=None, max_length=10, description="Corpus document ids")
+    urls: list[str] | None = Field(default=None, max_length=10, description="Page URLs to retrieve")
+    timestamp: str | None = Field(
+        default=None,
+        pattern=r"^\d{8}(\d{6})?$",
+        description="Preferred snapshot time YYYYMMDD (clamped to pre-2022)",
+    )
+    include_links: bool = Field(default=True, description="Include outbound article links")
+
+    @model_validator(mode="after")
+    def exactly_one_of_ids_or_urls(self) -> "V1ContentsRequest":
+        """Require exactly one non-empty selector."""
+        if bool(self.ids) == bool(self.urls):
+            raise ValueError("Provide exactly one of 'ids' or 'urls' (non-empty)")
+        return self
+
+
+class V1ContentsResult(BaseModel):
+    """A retrieved page with full text."""
+
+    id: str
+    url: str
+    title: str | None = None
+    text: str
+    published_year: int
+    domain: str
+    source: str = Field(..., description="'corpus' or 'wayback_live'")
+    links: list[str] | None = Field(default=None, description="Outbound article links (live fetches only)")
+
+
+class V1ContentsError(BaseModel):
+    """A per-item retrieval failure — the batch itself never fails."""
+
+    item: str
+    reason: str
+
+
+class V1ContentsResponse(BaseModel):
+    """POST /v1/contents response."""
+
+    results: list[V1ContentsResult]
+    errors: list[V1ContentsError] = Field(default_factory=list)
+    request_id: str
+
+
+class V1FindSimilarRequest(BaseModel):
+    """POST /v1/find-similar request body — exactly one of id or url."""
+
+    id: str | None = Field(default=None, max_length=16, description="Corpus document id")
+    url: str | None = Field(default=None, max_length=2000, description="Stored document URL")
+    num_results: int = Field(default=10, ge=1, le=50)
+
+    @model_validator(mode="after")
+    def exactly_one_of_id_or_url(self) -> "V1FindSimilarRequest":
+        """Require exactly one selector."""
+        if bool(self.id) == bool(self.url):
+            raise ValueError("Provide exactly one of 'id' or 'url'")
+        return self
+
+
+class V1FindSimilarResponse(BaseModel):
+    """POST /v1/find-similar response."""
+
+    source_id: str
+    results: list[V1Result]
     search_time_ms: int
     request_id: str
 

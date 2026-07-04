@@ -9,6 +9,7 @@ from sqlalchemy.pool import NullPool
 
 # Import all ORM model modules so Base.metadata is fully populated
 import backend.auth.models  # noqa: F401
+import backend.services.models  # noqa: F401
 from backend.config import settings
 from backend.db import Base
 
