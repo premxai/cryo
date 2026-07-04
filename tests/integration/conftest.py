@@ -13,6 +13,8 @@ async def client():
     with (
         patch("backend.db.init_db_pool", new_callable=AsyncMock),
         patch("backend.db.close_db_pool", new_callable=AsyncMock),
+        patch("backend.auth.quota.init_redis", new_callable=AsyncMock),
+        patch("backend.auth.quota.close_redis", new_callable=AsyncMock),
         patch("backend.search.verify_meilisearch", return_value=True),
     ):
         from backend.main import app

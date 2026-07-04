@@ -18,6 +18,7 @@ from typing import Annotated
 
 import structlog
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -25,11 +26,26 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.v1 import router as v1_router
+from backend.auth.quota import close_redis, init_redis
 from backend.config import settings
 from backend.db import close_db_pool, get_db, init_db_pool
+from backend.errors import APIError
 from backend.logging_config import configure_logging
-from backend.models import FacetCount, HealthResponse, SearchQuery, SearchResponse
-from backend.search import get_facet_counts, keyword_search, suggest_completions, verify_meilisearch
+from backend.models import (
+    FacetCount,
+    HealthResponse,
+    SearchQuery,
+    SearchResponse,
+    SemanticSearchQuery,
+)
+from backend.search import (
+    get_facet_counts,
+    keyword_search,
+    semantic_search,
+    suggest_completions,
+    verify_meilisearch,
+)
 
 logger = structlog.get_logger()
 
@@ -46,6 +62,9 @@ async def lifespan(app: FastAPI):
     # DB — non-fatal in dev
     await init_db_pool()
 
+    # Redis (rate limits + quotas) — non-fatal in dev
+    await init_redis()
+
     # Meilisearch — warn but continue if not reachable
     if not verify_meilisearch():
         logger.warning(
@@ -60,6 +79,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
+    await close_redis()
     await close_db_pool()
     logger.info("cryo.shutdown")
 
@@ -95,6 +115,7 @@ app.add_middleware(
 async def request_id_middleware(request: Request, call_next):
     """Bind a unique request_id to every structlog log line within this request."""
     request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
     structlog.contextvars.bind_contextvars(request_id=request_id)
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
@@ -105,10 +126,29 @@ async def request_id_middleware(request: Request, call_next):
 # ── Error handlers ────────────────────────────────────────────────────────────
 
 
+@app.exception_handler(APIError)
+async def api_error_handler(request: Request, exc: APIError):
+    """Render typed /v1 errors as {"error": {type, message, request_id}}."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "type": exc.error_type,
+                "message": exc.message,
+                "request_id": getattr(request.state, "request_id", ""),
+            }
+        },
+        headers=exc.headers,
+    )
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request: Request, exc: RequestValidationError):
     """Return structured validation errors without leaking internals."""
-    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+    return JSONResponse(
+        status_code=422,
+        content={"detail": jsonable_encoder(exc.errors(), custom_encoder={ValueError: str})},
+    )
 
 
 @app.exception_handler(Exception)
@@ -123,7 +163,12 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
+# ── Routers ───────────────────────────────────────────────────────────────────
+
+app.include_router(v1_router)
+
+
+# ── Legacy endpoints (unauthenticated — power the demo frontend) ──────────────
 
 
 @app.get(
@@ -131,6 +176,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     response_model=SearchResponse,
     summary="BM25 keyword search over pre-2022 corpus",
     tags=["Search"],
+    include_in_schema=not settings.is_production,
 )
 async def search(params: Annotated[SearchQuery, Depends()]) -> SearchResponse:
     """Search the frozen pre-2022 human web corpus using BM25 keyword matching.
@@ -150,10 +196,36 @@ async def search(params: Annotated[SearchQuery, Depends()]) -> SearchResponse:
 
 
 @app.get(
+    "/semantic-search",
+    response_model=SearchResponse,
+    summary="Vector/semantic search over pre-2022 corpus",
+    tags=["Search"],
+    include_in_schema=not settings.is_production,
+)
+async def semantic_search_endpoint(
+    params: Annotated[SemanticSearchQuery, Depends()],
+) -> SearchResponse:
+    """Search using vector embeddings for semantic understanding.
+
+    Uses sentence-transformers (all-MiniLM-L6-v2) to embed the query,
+    then searches Qdrant vector index. Falls back to BM25 if unavailable.
+    Returns results ranked by cosine similarity.
+    """
+    try:
+        return semantic_search(query=params.q, limit=params.limit, offset=params.offset)
+    except Exception as exc:
+        logger.error("cryo.semantic_search.failed", query=params.q, error=str(exc))
+        raise HTTPException(
+            status_code=503, detail="Semantic search temporarily unavailable"
+        ) from exc
+
+
+@app.get(
     "/suggest",
     response_model=list[str],
     summary="Autocomplete query suggestions",
     tags=["Search"],
+    include_in_schema=not settings.is_production,
 )
 async def suggest(
     q: str = Query(..., min_length=1, max_length=100, description="Partial query to complete"),
@@ -171,6 +243,7 @@ async def suggest(
     response_model=dict[str, list[FacetCount]],
     summary="Facet counts for filter sidebar",
     tags=["Search"],
+    include_in_schema=not settings.is_production,
 )
 async def facets(
     q: str = Query(default="", description="Optional query to scope facets"),

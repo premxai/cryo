@@ -30,6 +30,8 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application source
 COPY --chown=cryo:cryo ./backend ./backend
 COPY --chown=cryo:cryo ./pipeline ./pipeline
+COPY --chown=cryo:cryo ./migrations ./migrations
+COPY --chown=cryo:cryo ./alembic.ini ./alembic.ini
 
 # PATH, Python flags
 ENV PATH="/app/.venv/bin:$PATH" \

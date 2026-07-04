@@ -129,6 +129,7 @@ def _hit_to_result(h: dict) -> SearchResult:
         domain=h.get("domain", ""),
         word_count=h.get("word_count"),
         content_type=h.get("content_type"),
+        score=h.get("_cryo_score"),
     )
 
 
@@ -192,9 +193,11 @@ def keyword_search(params: SearchQuery) -> SearchResponse:
         scores = _cosine_scores(params.q, texts)
         # Combine: 0.5 × BM25_rank_score + 0.5 × cosine_sim
         n = len(hits)
+        for i, (h, s) in enumerate(zip(hits, scores, strict=True)):
+            h["_cryo_score"] = round(0.5 * (1 - i / n) + 0.5 * s, 4)
         ranked = sorted(
             ((h, s, i) for i, (h, s) in enumerate(zip(hits, scores, strict=True))),
-            key=lambda t: 0.5 * (1 - t[2] / n) + 0.5 * t[1],
+            key=lambda t: t[0]["_cryo_score"],
             reverse=True,
         )
         hits = [h for h, _, _ in ranked]
@@ -271,6 +274,78 @@ def suggest_completions(q: str, limit: int = 8) -> list[str]:
     except Exception as exc:
         logger.warning("cryo.search.suggest_error", q=q, error=str(exc))
         return []
+
+
+def semantic_search(query: str, limit: int = 20, offset: int = 0) -> SearchResponse:
+    """Vector search using sentence-transformers + Qdrant.
+
+    Falls back to BM25 keyword search if Qdrant is unavailable.
+    """
+    start_ms = int(time.time() * 1000)
+    meili_client = get_meili_client()
+    meili_index = meili_client.index(INDEX_NAME)
+
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        model = SentenceTransformer(settings.embedding_model, device="cpu")
+        q_vec = model.encode(query, normalize_embeddings=True)
+
+        try:
+            from qdrant_client import QdrantClient
+
+            qdrant = QdrantClient(settings.qdrant_url, timeout=5)
+            qdrant.get_collections()
+            results = qdrant.search(
+                collection_name="cryo_embeddings",
+                query_vector=q_vec.tolist(),
+                limit=limit + offset,
+            )
+            doc_ids = [str(r.payload.get("id", "")) for r in results if r.payload]
+            docs_map: dict[str, dict] = {}
+            for doc_id in doc_ids[offset:]:
+                try:
+                    search_result = meili_index.search(
+                        "", {"filter": f'id = "{doc_id}"', "limit": 1}
+                    )
+                    hits = search_result.get("hits", [])
+                    if hits:
+                        docs_map[doc_id] = hits[0]
+                except Exception:
+                    continue
+
+            ranked = []
+            for r in results:
+                did = str(r.payload.get("id", ""))
+                if did in docs_map:
+                    ranked.append(docs_map[did])
+
+            hits = ranked[:limit]
+        except Exception:
+            logger.info("cryo.search.semantic.qdrant_unavailable, falling back to BM25")
+            bm25 = meili_index.search(query, {"limit": limit + offset})
+            hits = bm25.get("hits", [])[offset:][:limit]
+    except ImportError:
+        logger.info("cryo.search.semantic.no_sentence_transformers, falling back to BM25")
+        bm25 = meili_index.search(query, {"limit": limit + offset})
+        hits = bm25.get("hits", [])[offset:][:limit]
+
+    elapsed = int(time.time() * 1000) - start_ms
+    results = [_hit_to_result(h) for h in hits]
+
+    logger.info(
+        "cryo.search.semantic",
+        query=query,
+        hits=len(results),
+        elapsed_ms=elapsed,
+    )
+
+    return SearchResponse(
+        query=query,
+        results=results,
+        total=len(results),
+        search_time_ms=elapsed,
+    )
 
 
 def get_facet_counts(q: str = "") -> dict[str, list[FacetCount]]:

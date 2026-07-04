@@ -1,5 +1,6 @@
 """Typed application config loaded from environment variables / .env file."""
 
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -30,7 +31,27 @@ class Settings(BaseSettings):
     # Claude judge model (used from M4)
     judge_model: str = "claude-3-5-haiku-20241022"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    # SaaS API (v1) — free tier limits
+    free_tier_monthly_quota: int = 1000
+    free_tier_rate_per_minute: int = 60
+
+    # /v1/contents — Wayback live fetch
+    wayback_timeout_seconds: int = 25
+    contents_max_items: int = 10
+    contents_negative_cache_ttl: int = 3600
+
+    # Self-serve signup (Phase 4)
+    resend_api_key: str = ""
+    public_base_url: str = ""
+
+    # CORS — comma-separated origin list; falls back to env defaults when empty
+    allowed_origins_env: str = Field(default="", validation_alias="ALLOWED_ORIGINS")
+
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "populate_by_name": True,
+    }
 
     @property
     def is_production(self) -> bool:
@@ -39,7 +60,9 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins(self) -> list[str]:
-        """CORS allowed origins — locked down in production."""
+        """CORS allowed origins — from ALLOWED_ORIGINS env var, locked down in production."""
+        if self.allowed_origins_env:
+            return [o.strip() for o in self.allowed_origins_env.split(",") if o.strip()]
         if self.is_production:
             return ["https://cryo.vercel.app"]
         return ["http://localhost:5173", "http://localhost:3000"]

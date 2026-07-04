@@ -66,6 +66,9 @@ class SearchResult(BaseModel):
     domain: str
     word_count: int | None = None
     content_type: str | None = None
+    score: float | None = Field(
+        default=None, description="Combined BM25+semantic rerank score (relevance sort only)"
+    )
 
     # Populated in M2 (authenticity scoring)
     human_score: float | None = Field(
@@ -94,6 +97,32 @@ class SearchResponse(BaseModel):
         default_factory=dict,
         description="Facet counts for domain, year, content_type",
     )
+
+
+class SemanticSearchQuery(BaseModel):
+    """Validated query parameters for semantic search."""
+
+    q: str = Field(..., min_length=1, max_length=500, description="Search query")
+    limit: int = Field(default=20, ge=1, le=50, description="Results per page")
+    offset: int = Field(default=0, ge=0, le=1000, description="Pagination offset")
+
+    @field_validator("q")
+    @classmethod
+    def sanitize_query(cls, v: str) -> str:
+        v = v.replace("\x00", "").strip()
+        if not v:
+            raise ValueError("Query is empty after sanitization")
+        return v
+
+
+class RewardScore(BaseModel):
+    """Score from the AI judge across 4 dimensions."""
+
+    authenticity: float = Field(default=0.0, ge=0.0, le=1.0)
+    relevance: float = Field(default=0.0, ge=0.0, le=1.0)
+    quality: float = Field(default=0.0, ge=0.0, le=1.0)
+    provenance: float = Field(default=0.0, ge=0.0, le=1.0)
+    total: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class HealthResponse(BaseModel):

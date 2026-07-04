@@ -82,7 +82,7 @@ strict = false
 ignore_missing_imports = true
 
 [tool.setuptools]
-packages = ["backend", "pipeline"]
+packages = ["backend", "backend.api", "backend.auth", "backend.services", "pipeline"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
