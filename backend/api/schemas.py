@@ -38,6 +38,10 @@ class V1Result(BaseModel):
     published_year: int
     domain: str
     content_type: str | None = None
+    human_score: float | None = Field(
+        default=None, description="Judge authenticity score (1.0 = confidently human-written)"
+    )
+    cryo_certified: bool = Field(default=False, description="True when human_score >= 0.85")
 
 
 class V1SearchResponse(BaseModel):
@@ -80,6 +84,10 @@ class V1ContentsResult(BaseModel):
     domain: str
     source: str = Field(..., description="'corpus' or 'wayback_live'")
     links: list[str] | None = Field(default=None, description="Outbound article links (live fetches only)")
+    human_score: float | None = Field(
+        default=None, description="Judge authenticity score (1.0 = confidently human-written)"
+    )
+    cryo_certified: bool = Field(default=False, description="True when human_score >= 0.85")
 
 
 class V1ContentsError(BaseModel):

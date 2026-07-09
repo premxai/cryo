@@ -22,6 +22,14 @@ REWARD_WEIGHTS = {
     "provenance": 0.10,
 }
 
+# Doc-level scoring (no query, so no relevance) — REWARD_WEIGHTS renormalized
+DOC_WEIGHTS = {
+    "authenticity": 0.57,
+    "quality": 0.29,
+    "provenance": 0.14,
+}
+DOC_QUERY_SENTINEL = "__doc__"  # cache key namespace for query-less scores
+
 CACHE_DIR = Path("data/cache/judge")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -131,6 +139,72 @@ class RewardScorer:
             + REWARD_WEIGHTS["provenance"] * score.provenance
         )
         self._save_cache(doc_id, query, score)
+        return score
+
+    def has_client(self) -> bool:
+        """True when an Anthropic client is available (API key configured)."""
+        return self._get_client() is not None
+
+    def _build_doc_prompt(self, doc: dict) -> str:
+        """Query-less prompt: rate the document itself, not its fit to a search."""
+        text = (doc.get("text") or doc.get("text_preview") or "")[:1500]
+        return (
+            "You are auditing a document for Cryo, a verified archive of "
+            "pre-2022, authentically human-written web content.\n\n"
+            f"Document URL: {doc.get('url', 'N/A')}\n"
+            f"Document timestamp: {doc.get('timestamp', 'N/A')}\n"
+            f"Document text: {text}\n\n"
+            "Rate this document 0.0 to 1.0 on each dimension:\n"
+            "1. authenticity: Is this genuinely human-written (not AI-generated, "
+            "not machine-translated boilerplate, not scraped spam)?\n"
+            "2. quality: Is this substantive, coherent, worth preserving?\n"
+            "3. provenance: Is the timestamp credible? Does style/content match the era?\n\n"
+            "Respond ONLY with valid JSON:\n"
+            '{"authenticity": 0.0, "quality": 0.0, "provenance": 0.0}'
+        )
+
+    def score_document(self, doc: dict) -> RewardScore:
+        """Score a document without a query (relevance = 0, excluded from total).
+
+        Used by pipeline/score_corpus.py to build the verified-corpus proof pack.
+        Cached under the __doc__ namespace; never caches fallback scores, so a
+        missing API key doesn't poison the cache.
+        """
+        doc_id = doc.get("id", "")
+        cached = self._load_cache(doc_id, DOC_QUERY_SENTINEL)
+        if cached is not None:
+            return cached
+
+        client = self._get_client()
+        if client is None:
+            return self._fallback_score(doc)
+
+        try:
+            response = client.messages.create(
+                model=self._model,
+                max_tokens=200,
+                messages=[{"role": "user", "content": self._build_doc_prompt(doc)}],
+            )
+            raw = response.content[0].text.strip()
+            raw = raw.replace("```json", "").replace("```", "").strip()
+            data = json.loads(raw)
+            score = RewardScore(
+                authenticity=float(data.get("authenticity", 0)),
+                relevance=0.0,
+                quality=float(data.get("quality", 0)),
+                provenance=float(data.get("provenance", 0)),
+            )
+        except Exception as exc:
+            logger.warning("cryo.judge.doc_score_error", doc_id=doc_id, error=str(exc))
+            return self._fallback_score(doc)
+
+        score.total = round(
+            DOC_WEIGHTS["authenticity"] * score.authenticity
+            + DOC_WEIGHTS["quality"] * score.quality
+            + DOC_WEIGHTS["provenance"] * score.provenance,
+            4,
+        )
+        self._save_cache(doc_id, DOC_QUERY_SENTINEL, score)
         return score
 
     def _fallback_score(self, doc: dict) -> RewardScore:

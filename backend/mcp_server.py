@@ -158,6 +158,8 @@ async def cryo_search(
                 "year": r.year,
                 "domain": r.domain,
                 "score": r.score,
+                "human_score": r.human_score,
+                "cryo_certified": r.cryo_certified,
             }
             for r in resp.results
         ],
@@ -191,6 +193,8 @@ async def cryo_get_page(url: str = "", id: str = "", timestamp: str = "") -> dic
         "domain": doc.domain,
         "source": doc.source,
         "links": doc.links or [],
+        "human_score": doc.human_score,
+        "cryo_certified": (doc.human_score or 0) >= 0.85,
     }
 
 

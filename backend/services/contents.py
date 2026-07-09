@@ -26,21 +26,20 @@ def _index_in_meili(doc: Document) -> None:
     from backend.search import INDEX_NAME, get_meili_client
 
     text = doc.text.replace("\x00", "").replace("\r", " ")
-    get_meili_client().index(INDEX_NAME).add_documents(
-        [
-            {
-                "id": doc.id,
-                "url": doc.url,
-                "text": text[:2000],
-                "text_preview": text[:300],
-                "timestamp": doc.timestamp,
-                "year": doc.year,
-                "domain": doc.domain,
-                "word_count": doc.word_count,
-                "content_type": doc.content_type or "article",
-            }
-        ]
-    )
+    meili_doc = {
+        "id": doc.id,
+        "url": doc.url,
+        "text": text[:2000],
+        "text_preview": text[:300],
+        "timestamp": doc.timestamp,
+        "year": doc.year,
+        "domain": doc.domain,
+        "word_count": doc.word_count,
+        "content_type": doc.content_type or "article",
+    }
+    if doc.human_score is not None:
+        meili_doc["human_score"] = doc.human_score
+    get_meili_client().index(INDEX_NAME).add_documents([meili_doc])
 
 
 async def index_document(doc: Document) -> None:

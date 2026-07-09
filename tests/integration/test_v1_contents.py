@@ -26,6 +26,7 @@ def _fake_document(doc_id: str = "abc123def4567890"):
     doc.domain = "example.com"
     doc.source = "corpus"
     doc.links = ["https://example.com/2018/other-essay"]
+    doc.human_score = 0.92
     return doc
 
 
@@ -76,6 +77,8 @@ async def test_contents_by_id_returns_doc_and_per_item_errors(authed_client):
     assert body["results"][0]["text"] == doc.text
     assert body["results"][0]["source"] == "corpus"
     assert body["results"][0]["links"] == doc.links
+    assert body["results"][0]["human_score"] == 0.92
+    assert body["results"][0]["cryo_certified"] is True
     assert len(body["errors"]) == 1
     assert body["errors"][0]["item"] == "nope0000nope0000"
 

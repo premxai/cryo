@@ -62,6 +62,8 @@ def _to_v1_result(r: SearchResult) -> V1Result:
         published_year=r.year,
         domain=r.domain,
         content_type=r.content_type,
+        human_score=r.human_score,
+        cryo_certified=r.cryo_certified,
     )
 
 
@@ -109,6 +111,8 @@ def _doc_to_contents_result(doc: Document, include_links: bool) -> V1ContentsRes
         domain=doc.domain,
         source=doc.source,
         links=doc.links if include_links else None,
+        human_score=doc.human_score,
+        cryo_certified=(doc.human_score or 0) >= 0.85,
     )
 
 

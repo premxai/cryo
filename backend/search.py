@@ -130,6 +130,8 @@ def _hit_to_result(h: dict) -> SearchResult:
         word_count=h.get("word_count"),
         content_type=h.get("content_type"),
         score=h.get("_cryo_score"),
+        human_score=h.get("human_score"),
+        cryo_certified=(h.get("human_score") or 0) >= 0.85,
     )
 
 

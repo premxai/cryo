@@ -31,6 +31,8 @@ def _fake_search_response() -> SearchResponse:
                 domain="example.com",
                 content_type="blog",
                 score=0.87,
+                human_score=0.91,
+                cryo_certified=True,
             )
         ],
         total=1,
@@ -75,6 +77,8 @@ async def test_v1_search_returns_results(authed_client):
     assert result["title"] == "How To Bake Bread"
     assert result["published_year"] == 2019
     assert result["score"] == 0.87
+    assert result["human_score"] == 0.91
+    assert result["cryo_certified"] is True
     assert body["request_id"]
 
 
