@@ -167,6 +167,46 @@ async def test_list_domain_rejects_garbage(authed_client):
     assert resp.json()["error"]["type"] == "invalid_domain"
 
 
+async def test_answer_returns_grounded_response(authed_client):
+    """/v1/answer maps the service result into the response schema."""
+    result = {
+        "answer": "The old web was personal [1].",
+        "citations": [
+            {
+                "index": 1,
+                "id": "doc1",
+                "url": "https://example.com/2019/essay",
+                "archive_url": "https://web.archive.org/web/20190101120000/https://example.com/2019/essay",
+                "timestamp": "20190101120000",
+                "human_score": 0.9,
+                "cryo_certified": True,
+            }
+        ],
+        "model": "claude-test",
+        "cached": False,
+    }
+    with patch("backend.api.v1.answer_query", new=AsyncMock(return_value=result)):
+        resp = await authed_client.post("/v1/answer", json={"query": "what was the old web like?"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["answer"].startswith("The old web")
+    assert body["citations"][0]["cryo_certified"] is True
+    assert body["citations"][0]["archive_url"].startswith("https://web.archive.org")
+
+
+async def test_answer_unconfigured_503(authed_client):
+    """Service raising answer_unavailable surfaces as a structured 503."""
+    from backend.errors import APIError
+
+    with patch(
+        "backend.api.v1.answer_query",
+        new=AsyncMock(side_effect=APIError(503, "answer_unavailable", "not configured")),
+    ):
+        resp = await authed_client.post("/v1/answer", json={"query": "anything at all"})
+    assert resp.status_code == 503
+    assert resp.json()["error"]["type"] == "answer_unavailable"
+
+
 async def test_find_similar_validates_selector(authed_client):
     """Both id and url → 422."""
     resp = await authed_client.post(

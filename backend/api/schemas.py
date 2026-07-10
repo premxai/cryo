@@ -157,6 +157,44 @@ class V1ListDomainResponse(BaseModel):
     request_id: str
 
 
+class V1AnswerRequest(BaseModel):
+    """POST /v1/answer request body."""
+
+    query: str = Field(..., min_length=3, max_length=500, description="Question to answer")
+    num_sources: int = Field(default=6, ge=2, le=10, description="Frozen sources to ground on")
+
+    @field_validator("query")
+    @classmethod
+    def sanitize_query(cls, v: str) -> str:
+        """Strip null bytes and whitespace."""
+        v = v.replace("\x00", "").strip()
+        if not v:
+            raise ValueError("Query is empty after sanitization")
+        return v
+
+
+class V1Citation(BaseModel):
+    """A frozen, provable source backing part of an answer."""
+
+    index: int = Field(..., description="Matches [n] markers in the answer text")
+    id: str
+    url: str
+    archive_url: str = Field(..., description="Immutable Wayback Machine link to this capture")
+    timestamp: str
+    human_score: float | None = None
+    cryo_certified: bool = False
+
+
+class V1AnswerResponse(BaseModel):
+    """POST /v1/answer response — every citation predates generative AI."""
+
+    answer: str
+    citations: list[V1Citation]
+    model: str
+    cached: bool
+    request_id: str
+
+
 class V1UsageResponse(BaseModel):
     """GET /v1/usage response — current month consumption from the durable ledger."""
 

@@ -10,6 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.schemas import (
+    V1AnswerRequest,
+    V1AnswerResponse,
+    V1Citation,
     V1ContentsError,
     V1ContentsRequest,
     V1ContentsResponse,
@@ -31,6 +34,7 @@ from backend.db import get_db
 from backend.errors import APIError
 from backend.models import SearchQuery, SearchResult
 from backend.search import keyword_search
+from backend.services.answer import answer_query
 from backend.services.contents import get_document_by_id, resolve_url
 from backend.services.domains import list_domain, normalize_domain
 from backend.services.models import Document
@@ -195,6 +199,34 @@ async def v1_find_similar(
         source_id=source_id,
         results=[_to_v1_result(r) for r in internal],
         search_time_ms=int(time.time() * 1000) - start_ms,
+        request_id=getattr(request.state, "request_id", ""),
+    )
+
+
+@router.post(
+    "/answer",
+    response_model=V1AnswerResponse,
+    summary="Ask the pre-AI web — grounded answer with frozen citations",
+)
+async def v1_answer(
+    body: V1AnswerRequest,
+    request: Request,
+    response: Response,
+    background: BackgroundTasks,
+    key: Annotated[ApiKey, Depends(require_api_key)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> V1AnswerResponse:
+    """Answer a question using ONLY archived pre-2022 sources. Every citation
+    carries an immutable archive link, capture timestamp, and authenticity
+    score — provably free of generative-AI contamination. Costs 3 quota units.
+    """
+    await consume_quota(key, response, background, "answer", units=3)
+    result = await answer_query(db, body.query, body.num_sources)
+    return V1AnswerResponse(
+        answer=result["answer"],
+        citations=[V1Citation(**c) for c in result["citations"]],
+        model=result["model"],
+        cached=result["cached"],
         request_id=getattr(request.state, "request_id", ""),
     )
 

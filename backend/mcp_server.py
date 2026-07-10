@@ -27,6 +27,7 @@ from backend.db import AsyncSessionLocal
 from backend.errors import APIError
 from backend.models import SearchQuery
 from backend.search import keyword_search
+from backend.services.answer import answer_query
 from backend.services.contents import get_document_by_id, resolve_url
 from backend.services.domains import list_domain, normalize_domain
 from backend.services.similar import find_similar
@@ -221,6 +222,19 @@ async def cryo_find_similar(id: str = "", url: str = "", num_results: int = 10) 
             for r in results
         ],
     }
+
+
+@mcp.tool()
+async def cryo_answer(query: str, num_sources: int = 6) -> dict:
+    """Ask the pre-AI web: get an answer grounded ONLY in archived pre-2022 pages.
+
+    Every citation includes an immutable archive link, capture timestamp, and
+    human-authenticity score — useful when you need sources that provably
+    predate generative AI. Costs 3 quota units.
+    """
+    await _consume(units=3)
+    async with AsyncSessionLocal() as db:
+        return await answer_query(db, query, min(max(num_sources, 2), 10))
 
 
 @mcp.tool()
