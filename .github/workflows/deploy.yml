@@ -38,6 +38,16 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://postgres:test@localhost:5432/cryo
           REDIS_URL: redis://localhost:6379
 
+      - name: SDK tests
+        run: |
+          pip install -e ./sdk
+          pytest sdk/tests -x --tb=short
+        env:
+          MEILISEARCH_URL: http://localhost:7700
+          MEILISEARCH_KEY: test_key
+          DATABASE_URL: postgresql+asyncpg://postgres:test@localhost:5432/cryo
+          REDIS_URL: redis://localhost:6379
+
   # ── Build Docker image ───────────────────────────────────────────────────────
   build:
     needs: test

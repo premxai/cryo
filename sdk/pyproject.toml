@@ -1,0 +1,27 @@
+[project]
+name = "cryo-search"
+version = "0.1.0"
+description = "Python SDK for Cryo — search and browse the verified pre-AI web"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["search", "archive", "pre-ai", "wayback", "agents", "rag"]
+dependencies = [
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+langchain = ["langchain-core>=0.2"]
+llamaindex = ["llama-index-core>=0.10"]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://github.com/premxai/cryo"
+Documentation = "https://github.com/premxai/cryo#readme"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["cryo_search"]
