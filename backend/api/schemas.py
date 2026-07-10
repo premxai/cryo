@@ -131,6 +131,32 @@ class V1FindSimilarResponse(BaseModel):
     request_id: str
 
 
+class V1ListDomainRequest(BaseModel):
+    """POST /v1/list-domain request body."""
+
+    domain: str = Field(
+        ..., min_length=4, max_length=253, description="Domain to enumerate, e.g. paulgraham.com"
+    )
+    limit: int = Field(default=50, ge=1, le=100)
+
+
+class V1DomainPage(BaseModel):
+    """One archived page discovered for a domain."""
+
+    url: str
+    timestamp: str = Field(..., description="Wayback capture time YYYYMMDDHHMMSS")
+    in_corpus: bool = Field(..., description="Already stored — /v1/contents serves it instantly")
+
+
+class V1ListDomainResponse(BaseModel):
+    """POST /v1/list-domain response."""
+
+    domain: str
+    pages: list[V1DomainPage]
+    total: int
+    request_id: str
+
+
 class V1UsageResponse(BaseModel):
     """GET /v1/usage response — current month consumption from the durable ledger."""
 

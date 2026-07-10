@@ -103,13 +103,14 @@ app = FastAPI(
 # Prometheus metrics (exposes /metrics endpoint)
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
-# CORS — GET + POST (POST needed for future /score endpoint)
+# CORS — the dashboard is served cross-origin (Vercel) and sends Authorization
+# headers on /v1 calls plus DELETE for key revocation.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 

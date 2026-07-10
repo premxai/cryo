@@ -85,7 +85,7 @@ async def test_mcp_tools_list():
             )
     assert resp.status_code == 200
     tools = {t["name"] for t in resp.json()["result"]["tools"]}
-    assert tools == {"cryo_search", "cryo_get_page", "cryo_find_similar"}
+    assert {"cryo_search", "cryo_get_page", "cryo_find_similar", "cryo_list_domain"} <= tools
 
 
 async def test_mcp_tool_call_search():

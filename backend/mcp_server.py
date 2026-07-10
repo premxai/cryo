@@ -28,6 +28,7 @@ from backend.errors import APIError
 from backend.models import SearchQuery
 from backend.search import keyword_search
 from backend.services.contents import get_document_by_id, resolve_url
+from backend.services.domains import list_domain, normalize_domain
 from backend.services.similar import find_similar
 
 logger = structlog.get_logger()
@@ -220,6 +221,23 @@ async def cryo_find_similar(id: str = "", url: str = "", num_results: int = 10) 
             for r in results
         ],
     }
+
+
+@mcp.tool()
+async def cryo_list_domain(domain: str, limit: int = 50) -> dict:
+    """List a website's archived pre-2022 pages — "what did this site publish?"
+
+    Returns article URLs with capture timestamps. Pages marked in_corpus are
+    already stored and readable instantly via cryo_get_page; others will be
+    live-fetched from the archive on first read.
+    """
+    normalized = normalize_domain(domain)
+    if normalized is None:
+        raise APIError(422, "invalid_domain", "Provide a bare domain like 'paulgraham.com'")
+    await _consume()
+    async with AsyncSessionLocal() as db:
+        pages = await list_domain(db, normalized, min(max(limit, 1), 100))
+    return {"domain": normalized, "total": len(pages), "pages": pages}
 
 
 def mcp_asgi_app():

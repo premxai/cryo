@@ -135,6 +135,38 @@ async def test_find_similar_unknown_doc_404(authed_client):
     assert resp.json()["error"]["type"] == "document_not_found"
 
 
+async def test_list_domain_returns_pages(authed_client):
+    """list-domain normalizes input and returns CDX-backed pages."""
+    pages = [
+        {
+            "url": "https://example.com/2019/essay-one",
+            "timestamp": "20190101000000",
+            "in_corpus": True,
+        },
+        {
+            "url": "https://example.com/2020/essay-two",
+            "timestamp": "20200101000000",
+            "in_corpus": False,
+        },
+    ]
+    with patch("backend.api.v1.list_domain", new=AsyncMock(return_value=pages)):
+        resp = await authed_client.post(
+            "/v1/list-domain", json={"domain": "https://www.Example.com/some/path", "limit": 10}
+        )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["domain"] == "example.com"  # normalized
+    assert body["total"] == 2
+    assert body["pages"][0]["in_corpus"] is True
+
+
+async def test_list_domain_rejects_garbage(authed_client):
+    """Unparseable domain → 422 invalid_domain."""
+    resp = await authed_client.post("/v1/list-domain", json={"domain": "not a domain!!"})
+    assert resp.status_code == 422
+    assert resp.json()["error"]["type"] == "invalid_domain"
+
+
 async def test_find_similar_validates_selector(authed_client):
     """Both id and url → 422."""
     resp = await authed_client.post(

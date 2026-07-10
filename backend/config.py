@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     contents_max_items: int = 10
     contents_negative_cache_ttl: int = 3600
 
+    # /v1/list-domain — the CDX index is erratically slow on cold wildcard queries
+    cdx_timeout_seconds: int = 75
+
     # Self-serve signup (Phase 4)
     resend_api_key: str = ""
     public_base_url: str = "http://localhost:5173"

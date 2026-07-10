@@ -14,8 +14,11 @@ from backend.api.schemas import (
     V1ContentsRequest,
     V1ContentsResponse,
     V1ContentsResult,
+    V1DomainPage,
     V1FindSimilarRequest,
     V1FindSimilarResponse,
+    V1ListDomainRequest,
+    V1ListDomainResponse,
     V1Result,
     V1SearchRequest,
     V1SearchResponse,
@@ -29,6 +32,7 @@ from backend.errors import APIError
 from backend.models import SearchQuery, SearchResult
 from backend.search import keyword_search
 from backend.services.contents import get_document_by_id, resolve_url
+from backend.services.domains import list_domain, normalize_domain
 from backend.services.models import Document
 from backend.services.similar import find_similar
 
@@ -191,6 +195,39 @@ async def v1_find_similar(
         source_id=source_id,
         results=[_to_v1_result(r) for r in internal],
         search_time_ms=int(time.time() * 1000) - start_ms,
+        request_id=getattr(request.state, "request_id", ""),
+    )
+
+
+@router.post(
+    "/list-domain",
+    response_model=V1ListDomainResponse,
+    summary="Enumerate a domain's archived pre-2022 pages",
+)
+async def v1_list_domain(
+    body: V1ListDomainRequest,
+    request: Request,
+    key: Annotated[ApiKey, Depends(enforce_limits("list_domain"))],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> V1ListDomainResponse:
+    """What did this site publish before 2022? Zero-storage enumeration via the
+    Wayback CDX index; `in_corpus` pages are readable instantly via /v1/contents.
+    """
+    domain = normalize_domain(body.domain)
+    if domain is None:
+        raise APIError(422, "invalid_domain", "Provide a bare domain like 'paulgraham.com'")
+    try:
+        pages = await list_domain(db, domain, body.limit)
+    except Exception as exc:
+        logger.error("cryo.v1.list_domain_failed", domain=domain, error=str(exc))
+        raise APIError(
+            503, "archive_unavailable", "The archive index is temporarily unavailable"
+        ) from exc
+
+    return V1ListDomainResponse(
+        domain=domain,
+        pages=[V1DomainPage(**p) for p in pages],
+        total=len(pages),
         request_id=getattr(request.state, "request_id", ""),
     )
 
