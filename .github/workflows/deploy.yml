@@ -69,11 +69,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ── Deploy to DigitalOcean ───────────────────────────────────────────────────
+  # ── Deploy ────────────────────────────────────────────────────────────────────
+  # Disabled: the DigitalOcean droplet these secrets pointed at was decommissioned.
+  # Re-enable once the IONOS host is provisioned: drop the `if: false` line below,
+  # swap DO_DROPLET_IP/DO_SSH_KEY for the IONOS equivalents (repo secrets), and run
+  # deploy.sh manually on the new box once first so /opt/cryo exists before this
+  # SSH-based script takes over.
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: false && github.ref == 'refs/heads/main'
 
     steps:
       - name: Deploy to droplet via SSH
