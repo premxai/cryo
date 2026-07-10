@@ -4,6 +4,7 @@ Revision ID: 0004
 Revises: 0003
 Create Date: 2026-07-09
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -19,9 +20,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.add_column("documents", sa.Column("human_score", sa.Float(), nullable=True))
     op.add_column("documents", sa.Column("judge_scores", JSONB(), nullable=True))
-    op.add_column(
-        "documents", sa.Column("scored_at", sa.DateTime(timezone=True), nullable=True)
-    )
+    op.add_column("documents", sa.Column("scored_at", sa.DateTime(timezone=True), nullable=True))
 
 
 def downgrade() -> None:

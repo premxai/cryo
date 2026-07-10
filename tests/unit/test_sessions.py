@@ -24,7 +24,7 @@ def test_tampered_token_rejected():
     token = create_session_token(uuid.uuid4())
     assert verify_session_token(token[:-4] + "0000") is None
     other = str(uuid.uuid4())
-    parts = token[len(SESSION_PREFIX):].rsplit(".", 2)
+    parts = token[len(SESSION_PREFIX) :].rsplit(".", 2)
     forged = f"{SESSION_PREFIX}{other}.{parts[1]}.{parts[2]}"
     assert verify_session_token(forged) is None
 

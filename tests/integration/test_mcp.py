@@ -43,9 +43,10 @@ async def mcp_client():
         # fresh one per lifespan entry (the auth wrapper picks it up lazily).
         mcp._session_manager = None
 
-        async with app.router.lifespan_context(app), AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://localhost"
-        ) as ac:
+        async with (
+            app.router.lifespan_context(app),
+            AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost") as ac,
+        ):
             yield ac
 
 
@@ -114,9 +115,7 @@ async def test_mcp_tool_call_search():
         ):
             resp = await client.post(
                 "/mcp/",
-                json=_rpc(
-                    "tools/call", {"name": "cryo_search", "arguments": {"query": "old web"}}
-                ),
+                json=_rpc("tools/call", {"name": "cryo_search", "arguments": {"query": "old web"}}),
                 headers={**MCP_HEADERS, "Authorization": "Bearer cryo_sk_good"},
             )
     assert resp.status_code == 200

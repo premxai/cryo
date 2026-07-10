@@ -21,7 +21,69 @@ RERANK_CANDIDATES = 50
 SALIENT_TERMS = 8
 _WORD_RE = re.compile(r"[a-z][a-z\-]{2,}")
 _STOPWORDS = frozenset(
-    ["the", "and", "for", "that", "with", "this", "from", "was", "were", "are", "has", "have", "had", "not", "but", "all", "can", "its", "you", "your", "they", "their", "our", "out", "very", "will", "would", "there", "been", "being", "about", "into", "more", "other", "some", "such", "than", "then", "them", "these", "those", "when", "where", "which", "while", "who", "whom", "why", "how", "what", "over", "under", "between", "because", "during", "before", "after", "above", "below", "just", "also"]
+    [
+        "the",
+        "and",
+        "for",
+        "that",
+        "with",
+        "this",
+        "from",
+        "was",
+        "were",
+        "are",
+        "has",
+        "have",
+        "had",
+        "not",
+        "but",
+        "all",
+        "can",
+        "its",
+        "you",
+        "your",
+        "they",
+        "their",
+        "our",
+        "out",
+        "very",
+        "will",
+        "would",
+        "there",
+        "been",
+        "being",
+        "about",
+        "into",
+        "more",
+        "other",
+        "some",
+        "such",
+        "than",
+        "then",
+        "them",
+        "these",
+        "those",
+        "when",
+        "where",
+        "which",
+        "while",
+        "who",
+        "whom",
+        "why",
+        "how",
+        "what",
+        "over",
+        "under",
+        "between",
+        "because",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "just",
+        "also",
+    ]
 )
 
 
@@ -55,7 +117,11 @@ async def _source_text(db: AsyncSession, doc_id: str | None, url: str | None) ->
 def _meili_get(doc_id: str) -> dict | None:
     """Fetch a single document from Meilisearch by id filter."""
     try:
-        raw = get_meili_client().index(INDEX_NAME).search("", {"filter": f'id = "{doc_id}"', "limit": 1})
+        raw = (
+            get_meili_client()
+            .index(INDEX_NAME)
+            .search("", {"filter": f'id = "{doc_id}"', "limit": 1})
+        )
         hits = raw.get("hits", [])
         return hits[0] if hits else None
     except Exception as exc:

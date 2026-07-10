@@ -38,7 +38,7 @@ def verify_session_token(token: str) -> uuid.UUID | None:
     if not token.startswith(SESSION_PREFIX):
         return None
     try:
-        user_part, expires_part, sig = token[len(SESSION_PREFIX):].rsplit(".", 2)
+        user_part, expires_part, sig = token[len(SESSION_PREFIX) :].rsplit(".", 2)
     except ValueError:
         return None
     payload = f"{user_part}.{expires_part}"

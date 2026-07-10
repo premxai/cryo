@@ -124,4 +124,12 @@ async def fetch_snapshot(url: str, timestamp: str | None = None) -> Snapshot | N
     return Snapshot(url=url, timestamp=snap_ts, text=text, links=extract_links(html, url))
 
 
-__all__ = ["Snapshot", "clamp_timestamp", "extract_links", "fetch_snapshot", "find_snapshot", "parse_availability", "url_to_domain"]
+__all__ = [
+    "Snapshot",
+    "clamp_timestamp",
+    "extract_links",
+    "fetch_snapshot",
+    "find_snapshot",
+    "parse_availability",
+    "url_to_domain",
+]

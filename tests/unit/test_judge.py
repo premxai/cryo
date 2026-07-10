@@ -33,7 +33,9 @@ def test_score_document_parses_and_weights(tmp_path, monkeypatch):
     assert score.authenticity == 0.9
     assert score.relevance == 0.0
     expected = round(
-        DOC_WEIGHTS["authenticity"] * 0.9 + DOC_WEIGHTS["quality"] * 0.8 + DOC_WEIGHTS["provenance"] * 0.7,
+        DOC_WEIGHTS["authenticity"] * 0.9
+        + DOC_WEIGHTS["quality"] * 0.8
+        + DOC_WEIGHTS["provenance"] * 0.7,
         4,
     )
     assert score.total == expected

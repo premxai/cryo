@@ -68,7 +68,9 @@ class UsageLedger(Base):
     """Durable per-month, per-endpoint request counts — the future billing metering source."""
 
     __tablename__ = "usage_ledger"
-    __table_args__ = (UniqueConstraint("api_key_id", "month", "endpoint", name="uq_usage_key_month_endpoint"),)
+    __table_args__ = (
+        UniqueConstraint("api_key_id", "month", "endpoint", name="uq_usage_key_month_endpoint"),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     api_key_id: Mapped[uuid.UUID] = mapped_column(

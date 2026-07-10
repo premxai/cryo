@@ -83,7 +83,9 @@ class V1ContentsResult(BaseModel):
     published_year: int
     domain: str
     source: str = Field(..., description="'corpus' or 'wayback_live'")
-    links: list[str] | None = Field(default=None, description="Outbound article links (live fetches only)")
+    links: list[str] | None = Field(
+        default=None, description="Outbound article links (live fetches only)"
+    )
     human_score: float | None = Field(
         default=None, description="Judge authenticity score (1.0 = confidently human-written)"
     )

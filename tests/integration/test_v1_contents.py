@@ -56,7 +56,9 @@ async def test_contents_validates_selector(authed_client):
     """Both or neither of ids/urls → 422."""
     resp = await authed_client.post("/v1/contents", json={})
     assert resp.status_code == 422
-    resp = await authed_client.post("/v1/contents", json={"ids": ["a"], "urls": ["https://x.com/y"]})
+    resp = await authed_client.post(
+        "/v1/contents", json={"ids": ["a"], "urls": ["https://x.com/y"]}
+    )
     assert resp.status_code == 422
 
 
@@ -68,9 +70,7 @@ async def test_contents_by_id_returns_doc_and_per_item_errors(authed_client):
         return doc if doc_id == doc.id else None
 
     with patch("backend.api.v1.get_document_by_id", side_effect=fake_get):
-        resp = await authed_client.post(
-            "/v1/contents", json={"ids": [doc.id, "nope0000nope0000"]}
-        )
+        resp = await authed_client.post("/v1/contents", json={"ids": [doc.id, "nope0000nope0000"]})
     assert resp.status_code == 200
     body = resp.json()
     assert len(body["results"]) == 1
@@ -127,7 +127,8 @@ async def test_find_similar_returns_ranked_results(authed_client):
 async def test_find_similar_unknown_doc_404(authed_client):
     """ValueError from the service → 404 document_not_found."""
     with patch(
-        "backend.api.v1.find_similar", new=AsyncMock(side_effect=ValueError("Document 'x' not found"))
+        "backend.api.v1.find_similar",
+        new=AsyncMock(side_effect=ValueError("Document 'x' not found")),
     ):
         resp = await authed_client.post("/v1/find-similar", json={"id": "x"})
     assert resp.status_code == 404

@@ -26,8 +26,18 @@ def _fake_doc(doc_id: str, score: float, source: str = "corpus", year: int = 201
 def test_doc_row_carries_full_provenance_chain():
     """Exported rows include url, timestamp, source, scores, and scored_at."""
     row = _doc_row(_fake_doc("abc", 0.9))
-    for field in ("id", "url", "text", "timestamp", "year", "domain", "source",
-                  "human_score", "judge_scores", "scored_at"):
+    for field in (
+        "id",
+        "url",
+        "text",
+        "timestamp",
+        "year",
+        "domain",
+        "source",
+        "human_score",
+        "judge_scores",
+        "scored_at",
+    ):
         assert field in row
     assert row["scored_at"].startswith("2026-07-09")
 

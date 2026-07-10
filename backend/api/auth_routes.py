@@ -101,7 +101,9 @@ async def request_magic_link(
     return {"message": "Check your email for a sign-in link"}
 
 
-@router.post("/verify", response_model=SessionResponse, summary="Exchange a magic link for a session")
+@router.post(
+    "/verify", response_model=SessionResponse, summary="Exchange a magic link for a session"
+)
 async def verify_magic_link(
     body: VerifyRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -179,9 +181,7 @@ async def revoke_key(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     """Revoke a key you own (immediate — the key stops authenticating)."""
-    result = await db.execute(
-        select(ApiKey).where(ApiKey.id == key_id, ApiKey.user_id == user.id)
-    )
+    result = await db.execute(select(ApiKey).where(ApiKey.id == key_id, ApiKey.user_id == user.id))
     key = result.scalar_one_or_none()
     if key is None:
         raise APIError(404, "key_not_found", "No such key on this account")

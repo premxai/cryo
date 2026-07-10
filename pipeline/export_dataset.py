@@ -97,7 +97,9 @@ async def export(min_score: float | None, limit: int | None) -> None:
 def main() -> None:
     """Parse args and run the export."""
     parser = argparse.ArgumentParser(description="Export the scored Cryo corpus sample")
-    parser.add_argument("--min-score", type=float, default=None, help="Only docs at/above this human_score")
+    parser.add_argument(
+        "--min-score", type=float, default=None, help="Only docs at/above this human_score"
+    )
     parser.add_argument("--limit", type=int, default=None, help="Cap exported doc count")
     args = parser.parse_args()
     asyncio.run(export(args.min_score, args.limit))

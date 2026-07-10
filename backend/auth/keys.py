@@ -55,7 +55,9 @@ async def require_api_key(
     """
     presented = extract_key_from_request(request)
     if presented is None:
-        raise APIError(401, "missing_api_key", "Pass your API key as 'Authorization: Bearer cryo_sk_...'")
+        raise APIError(
+            401, "missing_api_key", "Pass your API key as 'Authorization: Bearer cryo_sk_...'"
+        )
 
     try:
         result = await db.execute(select(ApiKey).where(ApiKey.key_hash == hash_key(presented)))
@@ -63,7 +65,9 @@ async def require_api_key(
         raise
     except Exception as exc:
         logger.error("cryo.auth.db_unavailable", error=str(exc))
-        raise APIError(503, "auth_unavailable", "Authentication backend is temporarily unavailable") from exc
+        raise APIError(
+            503, "auth_unavailable", "Authentication backend is temporarily unavailable"
+        ) from exc
 
     key = result.scalar_one_or_none()
     if key is None or key.revoked_at is not None:

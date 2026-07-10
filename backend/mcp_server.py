@@ -101,7 +101,9 @@ class MCPAuthMiddleware:
             return
         headers = {k.decode().lower(): v.decode() for k, v in scope.get("headers", [])}
         auth = headers.get("authorization", "")
-        presented = auth[7:].strip() if auth.lower().startswith("bearer ") else headers.get("x-api-key", "")
+        presented = (
+            auth[7:].strip() if auth.lower().startswith("bearer ") else headers.get("x-api-key", "")
+        )
         key = await _validate_key(presented) if presented else None
         if key is None:
             await _send_401(send)
@@ -116,7 +118,12 @@ class MCPAuthMiddleware:
 async def _send_401(send) -> None:
     """Emit a bare 401 JSON response from raw ASGI."""
     body = json.dumps(
-        {"error": {"type": "invalid_api_key", "message": "Pass a valid API key via 'Authorization: Bearer cryo_sk_...'"}}
+        {
+            "error": {
+                "type": "invalid_api_key",
+                "message": "Pass a valid API key via 'Authorization: Bearer cryo_sk_...'",
+            }
+        }
     ).encode()
     await send(
         {

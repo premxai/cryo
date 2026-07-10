@@ -183,7 +183,9 @@ async def v1_find_similar(
         raise APIError(404, "document_not_found", str(exc)) from exc
     except Exception as exc:
         logger.error("cryo.v1.find_similar_failed", error=str(exc))
-        raise APIError(503, "search_unavailable", "Find-similar is temporarily unavailable") from exc
+        raise APIError(
+            503, "search_unavailable", "Find-similar is temporarily unavailable"
+        ) from exc
 
     return V1FindSimilarResponse(
         source_id=source_id,
