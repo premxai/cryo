@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import Search from './Search.jsx'
 import Docs from './Docs.jsx'
 import Dashboard from './Dashboard.jsx'
+import Playground from './Playground.jsx'
+import Pricing from './Pricing.jsx'
 
 /**
  * Parse the location hash into { route, params }.
@@ -51,7 +53,9 @@ export default function App() {
           </span>
           <div className="w-px h-4 bg-white/10 hidden sm:block" />
           {navLink('#/', 'Search', route === '')}
-          {navLink('#/docs', 'API Docs', route === 'docs')}
+          {navLink('#/ask', 'Ask', route === 'ask')}
+          {navLink('#/docs', 'Docs', route === 'docs')}
+          {navLink('#/pricing', 'Pricing', route === 'pricing')}
           {navLink('#/dashboard', 'Keys', route === 'dashboard' || route === 'verify')}
           <a
             href="https://github.com/premxai/cryo"
@@ -66,11 +70,13 @@ export default function App() {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center pt-24 px-4">
+        {route === 'ask' && <Playground />}
         {route === 'docs' && <Docs />}
+        {route === 'pricing' && <Pricing />}
         {(route === 'dashboard' || route === 'verify') && (
           <Dashboard verifyToken={route === 'verify' ? params.get('token') : null} />
         )}
-        {route !== 'docs' && route !== 'dashboard' && route !== 'verify' && <Search />}
+        {!['ask', 'docs', 'pricing', 'dashboard', 'verify'].includes(route) && <Search />}
       </main>
 
       {/* Footer */}

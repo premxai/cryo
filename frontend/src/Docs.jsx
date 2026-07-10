@@ -48,6 +48,26 @@ export default function Docs() {
   -d '{"urls": ["http://paulgraham.com/ds.html"], "timestamp": "20200101"}'`}
       </Code>
 
+      <h2 className="text-lg text-white/90 mb-4">Ask the pre-AI web</h2>
+      <p className="text-sm text-white/50 mb-4 font-light">
+        Grounded answers citing only frozen pre-2022 snapshots — each citation carries an
+        immutable archive link, capture timestamp, and authenticity score. Costs 3 quota units.
+      </p>
+      <Code label="POST /v1/answer">
+{`curl -X POST ${API_URL}/v1/answer \\
+  -H "Authorization: Bearer cryo_sk_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"query": "what did people think about remote work?", "num_sources": 6}'`}
+      </Code>
+
+      <h2 className="text-lg text-white/90 mb-4">Browse a domain's archive</h2>
+      <Code label="POST /v1/list-domain">
+{`curl -X POST ${API_URL}/v1/list-domain \\
+  -H "Authorization: Bearer cryo_sk_YOUR_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"domain": "paulgraham.com", "limit": 50}'`}
+      </Code>
+
       <h2 className="text-lg text-white/90 mb-4">Find similar</h2>
       <Code label="POST /v1/find-similar">
 {`curl -X POST ${API_URL}/v1/find-similar \\
@@ -71,11 +91,35 @@ for hit in r.json()["results"]:
     print(hit["url"], len(page["results"][0]["text"]))`}
       </Code>
 
+      <h2 className="text-lg text-white/90 mb-4">Python SDK</h2>
+      <Code label="pip install cryo-search">
+{`from cryo_search import CryoClient
+
+cryo = CryoClient(api_key="cryo_sk_YOUR_KEY")
+
+results = cryo.search("geocities culture", num_results=5)
+page = cryo.contents(ids=[results[0].id])
+answer = cryo.answer("what was the early web like?")
+print(answer.answer)
+for c in answer.citations:
+    print(f"  [{c.index}] {c.url} (frozen {c.timestamp[:8]})")`}
+      </Code>
+      <Code label="LangChain">
+{`# pip install "cryo-search[langchain]"
+from cryo_search.langchain import CryoSearchTool, CryoAnswerTool
+
+tools = [CryoSearchTool(api_key="cryo_sk_YOUR_KEY"),
+         CryoAnswerTool(api_key="cryo_sk_YOUR_KEY")]
+# drop into any LangChain / LangGraph agent`}
+      </Code>
+
       <h2 className="text-lg text-white/90 mb-4">MCP — use Cryo from Claude</h2>
       <p className="text-sm text-white/50 mb-4 font-light">
         A hosted MCP server exposes <code className="text-white/70">cryo_search</code>,{' '}
-        <code className="text-white/70">cryo_get_page</code> and{' '}
-        <code className="text-white/70">cryo_find_similar</code> as native agent tools.
+        <code className="text-white/70">cryo_get_page</code>,{' '}
+        <code className="text-white/70">cryo_find_similar</code>,{' '}
+        <code className="text-white/70">cryo_list_domain</code> and{' '}
+        <code className="text-white/70">cryo_answer</code> as native agent tools.
       </p>
       <Code label="Claude Code">
 {`claude mcp add --transport http cryo ${API_URL}/mcp/ \\

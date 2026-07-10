@@ -174,6 +174,50 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 app.include_router(v1_router)
 app.include_router(auth_router)
 
+
+# ── Demo proxy (powers the public playground — no API key exposed to browsers) ─
+
+
+async def _demo_rate_limit(request: Request) -> None:
+    """Per-IP (5/min) + global (100/hr) limits on the unauthenticated demo.
+
+    No-ops when Redis is unavailable (development).
+    """
+    import time as _time
+
+    from backend.auth.quota import get_redis
+
+    redis = get_redis()
+    if redis is None:
+        return
+    ip = request.headers.get("x-real-ip") or (request.client.host if request.client else "unknown")
+    minute, hour = int(_time.time()) // 60, int(_time.time()) // 3600
+    ip_count = await redis.incr(f"demo:{ip}:{minute}")
+    if ip_count == 1:
+        await redis.expire(f"demo:{ip}:{minute}", 120)
+    global_count = await redis.incr(f"demo:global:{hour}")
+    if global_count == 1:
+        await redis.expire(f"demo:global:{hour}", 7200)
+    if ip_count > 5 or global_count > 100:
+        raise APIError(429, "rate_limited", "Demo limit reached — get a free API key for more")
+
+
+@app.post("/demo/answer", include_in_schema=False)
+async def demo_answer(
+    body: dict,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> JSONResponse:
+    """Playground endpoint: /v1/answer without a key, strictly rate-limited."""
+    from backend.services.answer import answer_query
+
+    query = str(body.get("query", "")).replace("\x00", "").strip()[:500]
+    if len(query) < 3:
+        raise APIError(422, "invalid_request", "Ask a real question (3+ characters)")
+    await _demo_rate_limit(request)
+    result = await answer_query(db, query, num_sources=5)
+    return JSONResponse(result)
+
 # MCP server — Cryo as a native tool for Claude/agent frameworks (same API keys)
 app.mount("/mcp", mcp_asgi_app())
 
