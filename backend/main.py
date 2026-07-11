@@ -218,6 +218,7 @@ async def demo_answer(
     result = await answer_query(db, query, num_sources=5)
     return JSONResponse(result)
 
+
 # MCP server — Cryo as a native tool for Claude/agent frameworks (same API keys)
 app.mount("/mcp", mcp_asgi_app())
 
