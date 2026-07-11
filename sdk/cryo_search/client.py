@@ -22,7 +22,7 @@ from cryo_search.types import (
     Usage,
 )
 
-DEFAULT_BASE_URL = "https://api.cryo.dev"
+DEFAULT_BASE_URL = "https://api.cryoweb.xyz"
 RETRYABLE_STATUS = {429, 502, 503}
 
 

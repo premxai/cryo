@@ -32,7 +32,7 @@ class CryoSearchTool(BaseTool):
         "that provably predate generative AI. Input: a search query string."
     )
     api_key: str
-    base_url: str = "https://api.cryo.dev"
+    base_url: str = "https://api.cryoweb.xyz"
     num_results: int = 5
     _client: CryoClient | None = None
 
@@ -57,7 +57,7 @@ class CryoAnswerTool(BaseTool):
         "provenance matters. Input: a question string."
     )
     api_key: str
-    base_url: str = "https://api.cryo.dev"
+    base_url: str = "https://api.cryoweb.xyz"
     _client: CryoClient | None = None
 
     def _run(self, query: str) -> str:

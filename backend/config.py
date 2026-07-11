@@ -70,7 +70,7 @@ class Settings(BaseSettings):
         if self.allowed_origins_env:
             return [o.strip() for o in self.allowed_origins_env.split(",") if o.strip()]
         if self.is_production:
-            return ["https://cryo.vercel.app"]
+            return ["https://cryoweb.xyz", "https://www.cryoweb.xyz"]
         return ["http://localhost:5173", "http://localhost:3000"]
 
 
