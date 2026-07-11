@@ -286,6 +286,7 @@ def semantic_search(query: str, limit: int = 20, offset: int = 0) -> SearchRespo
     start_ms = int(time.time() * 1000)
     meili_client = get_meili_client()
     meili_index = meili_client.index(INDEX_NAME)
+    search_type = "semantic"
 
     try:
         from sentence_transformers import SentenceTransformer
@@ -325,10 +326,12 @@ def semantic_search(query: str, limit: int = 20, offset: int = 0) -> SearchRespo
             hits = ranked[:limit]
         except Exception:
             logger.info("cryo.search.semantic.qdrant_unavailable, falling back to BM25")
+            search_type = "bm25_fallback"
             bm25 = meili_index.search(query, {"limit": limit + offset})
             hits = bm25.get("hits", [])[offset:][:limit]
     except ImportError:
         logger.info("cryo.search.semantic.no_sentence_transformers, falling back to BM25")
+        search_type = "bm25_fallback"
         bm25 = meili_index.search(query, {"limit": limit + offset})
         hits = bm25.get("hits", [])[offset:][:limit]
 
@@ -347,6 +350,7 @@ def semantic_search(query: str, limit: int = 20, offset: int = 0) -> SearchRespo
         results=results,
         total=len(results),
         search_time_ms=elapsed,
+        search_type=search_type,
     )
 
 

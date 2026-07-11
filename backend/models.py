@@ -93,6 +93,10 @@ class SearchResponse(BaseModel):
     results: list[SearchResult]
     total: int = Field(..., description="Total matches in index (may exceed returned results)")
     search_time_ms: int
+    search_type: str | None = Field(
+        default=None,
+        description="How results were retrieved: 'semantic' or 'bm25_fallback' (honest labeling)",
+    )
     facets: dict[str, list[FacetCount]] = Field(
         default_factory=dict,
         description="Facet counts for domain, year, content_type",
