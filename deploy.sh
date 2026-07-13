@@ -18,6 +18,7 @@ systemctl enable --now nginx
 # ── 2. Firewall ────────────────────────────────────────────────────────────────
 ufw allow ssh
 ufw allow 80/tcp
+ufw allow 443/tcp
 ufw --force enable
 echo "Firewall configured."
 
