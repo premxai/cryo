@@ -123,13 +123,23 @@ def save_checkpoint(count: int) -> None:
 
 
 def stream_with_retry(max_retries: int = 5):
-    """Stream FineWeb dataset with exponential backoff on network errors."""
+    """Stream FineWeb dataset with exponential backoff on network errors.
+
+    Restricts to pre-2022 CC-MAIN dump folders via `data_files` so we never
+    download post-2021 shards at all — the default full-dataset stream order
+    is not chronological, and post-2021 dumps (crawled more frequently) make
+    up a large share of total volume, so filtering client-side after
+    streaming everything wastes enormous bandwidth scanning out-of-range data.
+    """
     from datasets import load_dataset
+
+    patterns = [f"data/{prefix}-*/*.parquet" for prefix in VALID_CRAWL_PREFIXES]
 
     for attempt in range(max_retries):
         try:
             return load_dataset(
                 "HuggingFaceFW/fineweb",
+                data_files={"train": patterns},
                 split="train",
                 streaming=True,
             )
