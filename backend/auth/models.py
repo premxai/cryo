@@ -20,12 +20,21 @@ from backend.db import Base
 
 
 class User(Base):
-    """A registered developer account (email-identified)."""
+    """A registered developer account.
+
+    Identity comes from Clerk (email/password). `auth_user_id` is the Clerk
+    `sub` claim; `name` is captured at signup. Legacy magic-link users have a
+    null auth_user_id and are matched by email on first Clerk login.
+    """
 
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
+    name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    auth_user_id: Mapped[str | None] = mapped_column(
+        String(64), unique=True, nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -3,15 +3,16 @@ import Search from './Search.jsx'
 import AppSearch from './AppSearch.jsx'
 import Docs from './Docs.jsx'
 import Dashboard from './Dashboard.jsx'
+import Auth from './Auth.jsx'
 import Playground from './Playground.jsx'
 import Pricing from './Pricing.jsx'
-import { useSession, clearSession } from './useSession.js'
+import { useSession, useClerkAuth } from './useSession.js'
 import brandMark from './assets/cryo-archive-mark.png'
 
 /**
  * Parse the location hash into { route, params }.
  * Routes: #/ (landing), #/app (console), #/ask, #/docs, #/pricing,
- *         #/dashboard, #/verify?token=...
+ *         #/dashboard, #/login, #/signup.
  */
 function parseHash() {
   const hash = window.location.hash.replace(/^#\/?/, '')
@@ -30,9 +31,10 @@ const PUBLIC_NAV = [
  * App — archive-editorial shell: three-tier header, hash router, footer.
  */
 export default function App() {
-  const [{ route, params }, setLocation] = useState(parseHash)
+  const [{ route }, setLocation] = useState(parseHash)
   const [menuOpen, setMenuOpen] = useState(false)
   const session = useSession()
+  const { signOut } = useClerkAuth()
 
   useEffect(() => {
     const onHashChange = () => { setLocation(parseHash()); setMenuOpen(false) }
@@ -53,8 +55,9 @@ export default function App() {
     ask: ['CRYO / GROUNDED Q&A', 'NO SILENT SYNTHESIS', '© 2026'],
     docs: ['CRYO / API REFERENCE', 'V1 / DOCUMENTATION', '© 2026'],
     pricing: ['CRYO / QUOTA POLICY', 'PAID BILLING: NOT LIVE', '© 2026'],
-    dashboard: ['CRYO / ACCOUNT SURFACE', 'MAGIC-LINK AUTH', '© 2026'],
-    verify: ['CRYO / ACCOUNT SURFACE', 'MAGIC-LINK AUTH', '© 2026'],
+    dashboard: ['CRYO / ACCOUNT SURFACE', 'PASSWORD AUTH', '© 2026'],
+    login: ['CRYO / ACCOUNT ACCESS', 'PASSWORD AUTH', '© 2026'],
+    signup: ['CRYO / ACCOUNT ACCESS', 'PASSWORD AUTH', '© 2026'],
   }
   const foot = footers[route] || footers['']
 
@@ -91,7 +94,7 @@ export default function App() {
               <button
                 className="key-link"
                 type="button"
-                onClick={clearSession}
+                onClick={async () => { await signOut(); window.location.hash = '#/' }}
                 style={{ font: '500 11px var(--mono)', textTransform: 'uppercase' }}
               >
                 Sign out
@@ -99,12 +102,12 @@ export default function App() {
             </>
           ) : (
             <>
-              <a className="account-link" href="#/dashboard">Log in</a>
-              <a className="signup-link" href="#/dashboard">Sign up</a>
+              <a className="account-link" href="#/login" aria-current={route === 'login' ? 'page' : undefined}>Log in</a>
+              <a className="signup-link" href="#/signup" aria-current={route === 'signup' ? 'page' : undefined}>Sign up</a>
               <a
                 className="key-link"
-                href="#/dashboard"
-                aria-current={route === 'dashboard' || route === 'verify' ? 'page' : undefined}
+                href="#/signup"
+                aria-current={route === 'dashboard' ? 'page' : undefined}
               >
                 Get API key <span aria-hidden="true">↗</span>
               </a>
@@ -118,10 +121,10 @@ export default function App() {
         {route === 'ask' && <Playground />}
         {route === 'docs' && <Docs />}
         {route === 'pricing' && <Pricing />}
-        {(route === 'dashboard' || route === 'verify') && (
-          <Dashboard verifyToken={route === 'verify' ? params.get('token') : null} />
-        )}
-        {!['app', 'ask', 'docs', 'pricing', 'dashboard', 'verify'].includes(route) && <Search />}
+        {route === 'login' && <Auth mode="login" />}
+        {route === 'signup' && <Auth mode="signup" />}
+        {route === 'dashboard' && <Dashboard />}
+        {!['app', 'ask', 'docs', 'pricing', 'dashboard', 'login', 'signup'].includes(route) && <Search />}
       </main>
 
       <footer className="site-footer">

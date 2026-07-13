@@ -1,76 +1,52 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useSession, setSession as saveSession, clearSession } from './useSession'
+import { useSession, useClerkAuth } from './useSession'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
 /**
- * Dashboard — magic-link sign-in plus API key management.
- * Also handles the #/verify?token=... landing from the emailed link.
+ * Dashboard — API key management for a Clerk-authenticated account.
+ * Signup/login happens on the Auth pages; here we just manage keys.
  */
-export default function Dashboard({ verifyToken }) {
-  const session = useSession()
-  const [email, setEmail] = useState('')
+export default function Dashboard() {
+  const account = useSession()
+  const { getToken, signOut } = useClerkAuth()
   const [status, setStatus] = useState('')
-  const [statusReady, setStatusReady] = useState(false)
   const [keys, setKeys] = useState([])
   const [newKey, setNewKey] = useState(null)
   const [keyName, setKeyName] = useState('')
 
-  const authHeaders = useCallback(
-    () => ({ Authorization: `Bearer ${session?.session_token}` }),
-    [session],
-  )
-
-  // Exchange a magic-link token for a session on #/verify
-  useEffect(() => {
-    if (!verifyToken) return
-    fetch(`${API_URL}/v1/auth/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: verifyToken }),
+  // Authenticated fetch — attach the current Clerk JWT.
+  const authFetch = useCallback(async (path, opts = {}) => {
+    const token = await getToken()
+    return fetch(`${API_URL}${path}`, {
+      ...opts,
+      headers: { ...(opts.headers || {}), Authorization: `Bearer ${token}` },
     })
-      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
-      .then((data) => {
-        saveSession(data)
-        window.location.hash = '#/dashboard'
-      })
-      .catch(() => setStatus('Sign-in link is invalid or expired — request a new one.'))
-  }, [verifyToken])
+  }, [getToken])
 
   const loadKeys = useCallback(() => {
-    if (!session) return
-    fetch(`${API_URL}/v1/auth/keys`, { headers: authHeaders() })
-      .then((r) => {
-        if (r.status === 401) {
-          clearSession()
-          return []
-        }
-        return r.json()
-      })
+    if (!account) return
+    authFetch('/v1/auth/keys')
+      .then((r) => (r.ok ? r.json() : []))
       .then((data) => setKeys(Array.isArray(data) ? data : []))
       .catch(() => setStatus('Could not load keys.'))
-  }, [session, authHeaders])
+  }, [account, authFetch])
 
   useEffect(() => { loadKeys() }, [loadKeys])
 
-  async function requestLink(e) {
-    e.preventDefault()
-    setStatusReady(false)
-    setStatus('Sending…')
-    const r = await fetch(`${API_URL}/v1/auth/magic-link`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    setStatusReady(r.ok)
-    setStatus(r.ok ? 'Check your email for a sign-in link.' : 'Something went wrong — try again.')
-  }
+  // Not signed in → send to login.
+  useEffect(() => {
+    if (account === null) {
+      const t = setTimeout(() => { if (!account) window.location.hash = '#/login' }, 100)
+      return () => clearTimeout(t)
+    }
+  }, [account])
 
   async function createKey(e) {
     e.preventDefault()
-    const r = await fetch(`${API_URL}/v1/auth/keys`, {
+    const r = await authFetch('/v1/auth/keys', {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: keyName || 'default' }),
     })
     if (r.ok) {
@@ -85,65 +61,37 @@ export default function Dashboard({ verifyToken }) {
   }
 
   async function revokeKey(id) {
-    await fetch(`${API_URL}/v1/auth/keys/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await authFetch(`/v1/auth/keys/${id}`, { method: 'DELETE' })
     loadKeys()
   }
 
-  function signOut() {
-    clearSession()
+  function doSignOut() {
+    signOut()
     setKeys([])
     setNewKey(null)
+    window.location.hash = '#/'
   }
 
-  // ── Signed out: magic-link auth shell ─────────────────────────────────────
-  if (!session) {
+  if (!account) {
     return (
-      <div className="auth-shell">
-        <section className="auth-intro" aria-labelledby="login-title">
-          <p className="eyebrow"><span></span> CRYO ACCOUNT / ARCHIVE ACCESS</p>
-          <h1 id="login-title">Return to the<br /><em>record.</em></h1>
-          <p>Manage keys and build on a web corpus with a visible capture trail. No password — we send a magic link.</p>
-          <dl className="auth-ledger">
-            <div><dt>01 / PRIVATE</dt><dd>Your work stays in your workspace.</dd></div>
-            <div><dt>02 / TRACEABLE</dt><dd>Each result retains its source ledger.</dd></div>
-          </dl>
-        </section>
-        <section className="auth-panel" aria-labelledby="auth-form-title">
-          <div className="auth-form-wrap">
-            <p className="eyebrow"><span></span> ACCOUNT ACCESS</p>
-            <h2 id="auth-form-title">Sign<br /><em>in.</em></h2>
-            <form className="auth-form" onSubmit={requestLink}>
-              <label htmlFor="login-email">EMAIL ADDRESS</label>
-              <input
-                id="login-email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="you@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button className="ink-button" type="submit">Send magic link <span aria-hidden="true">→</span></button>
-              <p className={`auth-status${statusReady ? ' is-ready' : ''}`} aria-live="polite">
-                {status || 'A one-time sign-in link will be emailed to you.'}
-              </p>
-            </form>
-            <p className="auth-switch">
-              New to CRYO? The same link creates your workspace.
-            </p>
-          </div>
-        </section>
-      </div>
+      <section className="dashboard-top">
+        <p className="eyebrow"><span></span> ACCOUNT</p>
+        <h1>Sign in to<br /><em>continue.</em></h1>
+        <p>
+          <a className="ink-button" href="#/login" style={{ display: 'inline-block', marginTop: '1rem' }}>
+            Log in <span aria-hidden="true">→</span>
+          </a>
+        </p>
+      </section>
     )
   }
 
-  // ── Signed in: dashboard ──────────────────────────────────────────────────
   const activeKeys = keys.filter((k) => !k.revoked_at)
 
   return (
     <>
       <section className="dashboard-top">
-        <p className="eyebrow"><span></span> ACCOUNT / {session.email}</p>
+        <p className="eyebrow"><span></span> ACCOUNT / {account.name ? `${account.name} · ` : ''}{account.email}</p>
         <h1>Keys with<br /><em>consequences.</em></h1>
         <p>Create a named key, use it across REST, SDK, and MCP, and revoke it the moment it leaks.</p>
         <a className="ink-button" href="#/app" style={{ display: 'inline-block', marginTop: '1.5rem' }}>
@@ -165,12 +113,11 @@ export default function Dashboard({ verifyToken }) {
               <p className="eyebrow"><span></span> API KEYS</p>
               <h2>One key,<br />one clear owner.</h2>
             </div>
-            <button type="button" className="ink-button" onClick={signOut}>Sign out</button>
+            <button type="button" className="ink-button" onClick={doSignOut}>Sign out</button>
           </div>
 
           <form className="filter-group" style={{ margin: '1.5rem 0' }} onSubmit={createKey}>
             <input
-              className="year-range"
               style={{ border: '1px solid var(--line)', background: 'rgba(255,255,255,.34)', padding: '.6rem .7rem', font: '400 12px var(--mono)', width: '14rem' }}
               value={keyName}
               onChange={(e) => setKeyName(e.target.value)}

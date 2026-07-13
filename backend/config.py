@@ -50,6 +50,22 @@ class Settings(BaseSettings):
     session_ttl_hours: int = 72
     magic_link_ttl_minutes: int = 15
 
+    # Clerk auth — the backend verifies Clerk-issued session JWTs (RS256) on the
+    # dashboard endpoints, using Clerk's published JWKS. `clerk_issuer` is the
+    # Frontend API URL (e.g. https://your-app.clerk.accounts.dev); the JWKS URL
+    # is derived from it unless overridden.
+    clerk_issuer: str = ""
+    clerk_jwks_url: str = ""
+
+    @property
+    def clerk_jwks(self) -> str:
+        """Resolve the Clerk JWKS URL (explicit override, else derived from issuer)."""
+        if self.clerk_jwks_url:
+            return self.clerk_jwks_url
+        if self.clerk_issuer:
+            return self.clerk_issuer.rstrip("/") + "/.well-known/jwks.json"
+        return ""
+
     # CORS — comma-separated origin list; falls back to env defaults when empty
     allowed_origins_env: str = Field(default="", validation_alias="ALLOWED_ORIGINS")
 

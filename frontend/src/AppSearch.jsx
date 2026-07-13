@@ -21,9 +21,9 @@ export default function AppSearch() {
     runSearch, loadMore, hasMore, setOffset,
   } = useCorpusSearch({ pageSize: 20, auto: true, syncUrl: true });
 
-  // Auth gate — bounce to the magic-link sign-in.
+  // Auth gate — bounce to sign-in.
   useEffect(() => {
-    if (!session) window.location.hash = "#/dashboard";
+    if (!session) window.location.hash = "#/login";
   }, [session]);
 
   if (!session) return null;
