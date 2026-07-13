@@ -21,9 +21,8 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="border border-red-500/20 bg-red-900/10 p-4 font-mono text-sm text-red-400/70">
-          <span className="text-red-500/50">render error: </span>
-          {this.state.message}
+        <div className="ledger-error">
+          render error: {this.state.message}
         </div>
       )
     }

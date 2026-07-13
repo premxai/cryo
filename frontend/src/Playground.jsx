@@ -1,71 +1,38 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
 const EXAMPLES = [
+  'How did cities plan for coastal sea level rise before 2022?',
   'What did people think about remote work before 2022?',
-  'How did early startups approach fundraising?',
   'What was the culture of the early web like?',
 ]
 
-/**
- * Render answer text with [n] citation markers as superscript anchors.
- */
+/** Read a ?q= deep-link out of the hash (e.g. #/ask?q=...). */
+function readHashQuery() {
+  const hash = window.location.hash.replace(/^#\/?/, '')
+  const [, query] = hash.split('?')
+  return new URLSearchParams(query || '').get('q') || ''
+}
+
+/** Render answer text with [n] citation markers as superscript anchors. */
 function AnswerText({ text }) {
   const parts = text.split(/(\[\d+\])/g)
   return (
-    <p className="text-sm text-white/75 leading-relaxed whitespace-pre-wrap">
+    <p>
       {parts.map((part, i) => {
         const m = part.match(/^\[(\d+)\]$/)
         if (!m) return <span key={i}>{part}</span>
-        return (
-          <a key={i} href={`#cite-${m[1]}`} className="text-[#4a9eff] text-xs align-super mx-0.5">
-            [{m[1]}]
-          </a>
-        )
+        return <sup key={i}><a href={`#cite-${m[1]}`}>[{m[1]}]</a></sup>
       })}
     </p>
   )
 }
 
-function Citation({ c }) {
-  const date = c.timestamp
-    ? `${c.timestamp.slice(0, 4)}-${c.timestamp.slice(4, 6)}-${c.timestamp.slice(6, 8)}`
+function formatCapture(ts) {
+  return ts && ts.length >= 8
+    ? `${ts.slice(0, 4)}-${ts.slice(4, 6)}-${ts.slice(6, 8)}`
     : ''
-  return (
-    <div id={`cite-${c.index}`} className="liquid-glass rounded-xl px-4 py-3 flex items-start gap-3">
-      <span className="text-xs text-[#4a9eff] shrink-0 mt-0.5" style={{ fontFamily: 'var(--font-mono)' }}>
-        [{c.index}]
-      </span>
-      <div className="min-w-0 flex-1">
-        <a
-          href={c.archive_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-white/60 hover:text-white/90 transition-colors truncate block"
-          style={{ fontFamily: 'var(--font-mono)' }}
-          title={c.url}
-        >
-          {c.url}
-        </a>
-        <div className="flex items-center gap-3 mt-1.5 text-[10px] text-white/30 font-light">
-          <span style={{ fontFamily: 'var(--font-mono)' }}>❄ frozen {date}</span>
-          {c.human_score != null && (
-            <span>human score {(c.human_score * 100).toFixed(0)}%</span>
-          )}
-          {c.cryo_certified && <span className="text-emerald-400/60">✓ certified</span>}
-          <a
-            href={c.archive_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/20 hover:text-[#4a9eff]/60 transition-colors"
-          >
-            view snapshot ↗
-          </a>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 /**
@@ -73,10 +40,17 @@ function Citation({ c }) {
  * server-side proxy (no API key in the browser).
  */
 export default function Playground() {
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(() => readHashQuery() || EXAMPLES[0])
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [status, setStatus] = useState('READY / GROUNDED ONLY')
+
+  // Auto-run if arriving via a ?q= deep link.
+  useEffect(() => {
+    const q = readHashQuery()
+    if (q) ask(q)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function ask(q) {
     const question = (q ?? query).trim()
@@ -85,6 +59,7 @@ export default function Playground() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setStatus('READING THE FROZEN ARCHIVE…')
     try {
       const r = await fetch(`${API_URL}/demo/answer`, {
         method: 'POST',
@@ -94,90 +69,123 @@ export default function Playground() {
       const data = await r.json()
       if (!r.ok) throw new Error(data?.error?.message || `Request failed (${r.status})`)
       setResult(data)
+      setStatus('COMPLETE / GROUNDED')
     } catch (err) {
       setError(err.message)
+      setStatus('UNAVAILABLE')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="w-full max-w-2xl pb-16">
-      <h1 className="gradient-heading text-3xl mb-2">Ask the pre-AI web</h1>
-      <p className="text-sm text-white/50 mb-8 font-light">
-        Answers grounded only in archived pre-2022 pages — every citation is a frozen
-        snapshot with an authenticity score. Nothing here can be AI-contaminated, by construction.
-      </p>
+    <>
+      <section className="page-intro">
+        <p className="eyebrow"><span></span> /V1/ANSWER / GROUNDED ONLY</p>
+        <h1>Ask the web<br />before it <em>changed.</em></h1>
+        <p>
+          Answers are assembled only from frozen pre-2022 sources — every citation is an
+          archived snapshot with an authenticity state. Nothing here can be AI-contaminated,
+          by construction.
+        </p>
+      </section>
 
-      <form
-        onSubmit={(e) => { e.preventDefault(); ask() }}
-        className="flex gap-2 mb-4"
-      >
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask a question…"
-          maxLength={500}
-          className="flex-1 liquid-glass rounded-full px-5 py-3 text-sm bg-transparent text-white placeholder-white/30 focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="liquid-glass rounded-full px-6 py-3 text-sm text-white/80 hover:text-white transition-colors disabled:opacity-40"
-        >
-          {loading ? 'Thinking…' : 'Ask'}
-        </button>
-      </form>
+      <section className="ask-console">
+        <form onSubmit={(e) => { e.preventDefault(); ask() }}>
+          <label htmlFor="ask-question">Question</label>
+          <textarea
+            id="ask-question"
+            rows="3"
+            maxLength={500}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div>
+            <span>Live answer via the rate-limited demo proxy · no key required</span>
+            <button className="ink-button" type="submit" disabled={loading}>
+              {loading ? 'Thinking…' : <>Ask CRYO <span aria-hidden="true">→</span></>}
+            </button>
+          </div>
+        </form>
+        <aside>
+          <p>ANSWER RULE</p>
+          <strong>0</strong>
+          <span>unlinked claims allowed</span>
+          <p>MAXIMUM</p>
+          <strong>08</strong>
+          <span>sources per response</span>
+        </aside>
+      </section>
+
+      <section className="answer-surface" aria-live="polite">
+        <div className="answer-head">
+          <span>{status}</span>
+          <span>{result ? `${String(result.citations.length).padStart(2, '0')} SOURCES` : '— SOURCES'}</span>
+        </div>
+
+        <div className="answer-content">
+          {error && <p style={{ color: 'var(--copper)' }}>{error}</p>}
+          {!error && !result && !loading && (
+            <p className="answer-placeholder">
+              Ask a question to generate a grounded answer. Every claim links to a frozen
+              source, or CRYO returns an honest unavailable state.
+            </p>
+          )}
+          {!error && !result && loading && (
+            <p className="answer-placeholder">Reading the frozen archive…</p>
+          )}
+          {result && (
+            <>
+              <AnswerText text={result.answer} />
+              <p className="answer-meta">
+                {result.cached ? 'CACHED · ' : ''}MODEL: {result.model}
+              </p>
+            </>
+          )}
+        </div>
+
+        {result && (
+          <ol className="citation-list">
+            {result.citations.map((c) => (
+              <li key={c.index} id={`cite-${c.index}`}>
+                <b>
+                  {String(c.index).padStart(2, '0')} /{' '}
+                  {c.human_score != null ? `HUMAN ${c.human_score.toFixed(2)}` : 'UNSCORED'}
+                </b>
+                <a href={c.archive_url || c.url} target="_blank" rel="noreferrer">{c.url}</a>
+                <span>
+                  Captured {formatCapture(c.timestamp)}<br />
+                  {c.archive_url ? 'Archive snapshot available' : 'Live source'}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
 
       {!result && !loading && (
-        <div className="flex flex-wrap gap-2 mb-8">
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex}
-              onClick={() => ask(ex)}
-              className="text-xs text-white/30 hover:text-white/60 liquid-glass rounded-full px-3 py-1.5 transition-colors font-light"
-            >
-              {ex}
-            </button>
-          ))}
-        </div>
+        <section className="method-note" style={{ borderBottom: 'none', paddingBottom: '2rem' }}>
+          <p className="eyebrow"><span></span> TRY ONE</p>
+          <div className="filter-group" style={{ gridColumn: 'span 2' }}>
+            {EXAMPLES.map((ex) => (
+              <button key={ex} type="button" className="filter" onClick={() => ask(ex)}>
+                {ex}
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
-      {loading && (
-        <div className="liquid-glass rounded-xl p-5 animate-pulse">
-          <div className="h-3 w-3/4 bg-white/5 rounded mb-2" />
-          <div className="h-3 w-full bg-white/[0.03] rounded mb-2" />
-          <div className="h-3 w-5/6 bg-white/[0.03] rounded" />
-          <div className="text-[10px] text-white/20 mt-4 font-light">
-            reading the frozen archive…
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="liquid-glass rounded-xl p-4 text-sm text-red-400/80 font-light">
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <div className="space-y-6">
-          <div className="liquid-glass-strong rounded-xl p-5">
-            <AnswerText text={result.answer} />
-            <div className="text-[10px] text-white/20 mt-4 font-light">
-              {result.cached ? 'cached · ' : ''}model: {result.model}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-white/40 mb-3 tracking-wide">
-              FROZEN SOURCES · all captured before 2022
-            </div>
-            <div className="space-y-2">
-              {result.citations.map((c) => <Citation key={c.index} c={c} />)}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <section className="method-note">
+        <p className="eyebrow"><span></span> WHY THIS MATTERS</p>
+        <h2>A citation is not<br />a <em>decoration.</em></h2>
+        <p>
+          Each citation exposes the live source, its archived copy, capture timestamp, and
+          authenticity state. If no relevant source exists, CRYO says so rather than force an
+          answer.
+        </p>
+        <a href="#/docs">Read the answer contract <span aria-hidden="true">→</span></a>
+      </section>
+    </>
   )
 }

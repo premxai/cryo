@@ -1,11 +1,9 @@
 /**
- * Search — main search interface with:
+ * Search — archive-editorial home: frozen-cube hero + live result ledger.
  * - Debounced autocomplete (150ms suggest, 300ms search)
- * - Keyboard shortcuts: '/' to focus, Esc to clear, ↑↓ to navigate results, Enter to open
+ * - Keyboard shortcuts: '/' to focus, ↑↓ to navigate results, Enter to open
  * - URL-synced state (back button works, searches are shareable)
- * - Filter sidebar (year range, domain, content type, sort)
- * - Pagination via "Load more" button
- * - Highlighted matched terms in results
+ * - Filters (year range, domain, content type, sort) + "Load more" pagination
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -38,16 +36,16 @@ function writeUrlState(state) {
   if (state.domain) p.set("domain", state.domain);
   if (state.contentType) p.set("content_type", state.contentType);
   const qs = p.toString();
-  window.history.pushState({}, "", qs ? `?${qs}` : window.location.pathname);
+  const base = window.location.pathname + (window.location.hash || "#/");
+  window.history.replaceState({}, "", qs ? `${window.location.pathname}?${qs}${window.location.hash}` : base);
 }
 
 function ResultSkeleton() {
   return (
-    <div className="liquid-glass rounded-xl px-5 py-4 mb-3 animate-pulse">
-      <div className="h-2.5 w-40 bg-white/5 rounded mb-3" />
-      <div className="h-3.5 w-3/4 bg-white/5 rounded mb-2" />
-      <div className="h-3 w-full bg-white/[0.03] rounded mb-1" />
-      <div className="h-3 w-5/6 bg-white/[0.03] rounded" />
+    <div className="result-skeleton">
+      <div className="bar short" />
+      <div className="bar long" />
+      <div className="bar long" style={{ width: "60%" }} />
     </div>
   );
 }
@@ -77,15 +75,15 @@ export default function Search() {
   const inputRef = useRef(null);
   const searchTimerRef = useRef(null);
   const resultRefs = useRef([]);
+  const ledgerRef = useRef(null);
 
-  // ── Fetch global facets on mount ───────────────────────────────────────────
+  // ── Fetch global facets on mount + run search if URL has a query ──────────
   useEffect(() => {
     fetch(`${API_URL}/facets`)
       .then((r) => r.json())
       .then(setFacets)
       .catch(() => {});
 
-    // Run search if URL has a query on load
     if (initial.q) {
       runSearch(initial.q, { yearMin: initial.yearMin, yearMax: initial.yearMax, domain: initial.domain, contentType: initial.contentType }, initial.sort, 0, false);
     }
@@ -124,7 +122,7 @@ export default function Search() {
       setSearchTimeMs(data.search_time_ms);
       if (data.facets && Object.keys(data.facets).length) setFacets(data.facets);
       setFocusedIndex(-1);
-      document.title = q ? `${q} – Cryo` : "Cryo";
+      document.title = q ? `${q} — CRYO` : "CRYO — The web before the AI web.";
     } catch (err) {
       setError(err.message || "Search failed. Is the backend running?");
     } finally {
@@ -145,22 +143,10 @@ export default function Search() {
     return () => clearTimeout(searchTimerRef.current);
   }, [query, filters, sort]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Browser back/forward ───────────────────────────────────────────────────
-  useEffect(() => {
-    const handler = () => {
-      const s = readUrlState();
-      setQuery(s.q);
-      setFilters({ yearMin: s.yearMin, yearMax: s.yearMax, domain: s.domain, contentType: s.contentType });
-      setSort(s.sort);
-    };
-    window.addEventListener("popstate", handler);
-    return () => window.removeEventListener("popstate", handler);
-  }, []);
-
   // ── Global keyboard shortcuts ──────────────────────────────────────────────
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === "/" && document.activeElement !== inputRef.current && e.target.tagName !== "INPUT") {
+      if (e.key === "/" && document.activeElement !== inputRef.current && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
         e.preventDefault();
         inputRef.current?.focus();
         return;
@@ -195,73 +181,91 @@ export default function Search() {
     runSearch(query, filters, sort, newOffset, true);
   }
 
+  function onSubmitSearch(q) {
+    setOffset(0);
+    runSearch(q, filters, sort, 0, false);
+    ledgerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   const hasMore = results.length < total && results.length > 0;
+  const hasQuery = Boolean(query.trim());
+  const askHref = `#/ask?q=${encodeURIComponent(query.trim())}`;
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4">
-
-      {/* Hero heading + search */}
-      <div className="text-center mb-10">
-        <h1 className="gradient-heading text-5xl md:text-6xl mb-2 leading-tight">
-          The Human Web
-        </h1>
-        <p className="text-white/25 text-sm font-light tracking-wide mb-8">
-          Authenticated pre-2022 content · No AI · No noise
-        </p>
-
-        <AutocompleteInput
-          value={query}
-          onChange={setQuery}
-          onSearch={(q) => { setOffset(0); runSearch(q, filters, sort, 0, false); }}
-          inputRef={inputRef}
-        />
-
-        <div className="mt-2.5 text-[10px] text-white/15 text-right select-none font-light">
-          <kbd>/</kbd> focus ·{" "}
-          <kbd>↑↓</kbd> navigate ·{" "}
-          <kbd>↵</kbd> open
+    <>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow"><span></span> ARCHIVE INDEX / CUT OFF 2022-01-01</p>
+          <h1>The web<br />before the<br /><em>AI web.</em></h1>
+          <p className="lede">
+            Search infrastructure for a frozen pre-2022 corpus. Every result carries its
+            capture record and an honest human-authenticity state.
+          </p>
+          <AutocompleteInput
+            value={query}
+            onChange={setQuery}
+            onSearch={onSubmitSearch}
+            inputRef={inputRef}
+          />
+          <div className="hero-footnotes">
+            <p><b>FROZEN CUTOFF</b><strong>2022–01–01</strong><small>00:00:00 UTC</small></p>
+            <p>Not a feed. Not a rewrite.<br />An inspectable corpus for people and agents.</p>
+          </div>
         </div>
-      </div>
+        <figure className="archive-figure" aria-labelledby="artifact-caption">
+          <img
+            src={new URL("./assets/frozen-corpus-cube.png", import.meta.url).href}
+            alt="A monumental cube of clear ice preserving dense stacks of pre-2022 paper documents."
+          />
+          <figcaption id="artifact-caption">
+            <span>FROZEN CORPUS</span>
+            <b>Source, archive, timestamp.</b>
+            <small>Every result keeps its trail.</small>
+          </figcaption>
+        </figure>
+      </section>
 
-      <div className="flex gap-8">
-        {/* Filter sidebar */}
-        <FilterSidebar
-          filters={filters}
-          facets={facets}
-          sort={sort}
-          onFilterChange={(f) => { setFilters(f); setOffset(0); }}
-          onSortChange={(s) => { setSort(s); setOffset(0); }}
-        />
+      {/* ── Search shell ─────────────────────────────────────────────────── */}
+      <section className="search-shell" aria-labelledby="results-heading" ref={ledgerRef}>
+        <div className="search-intro">
+          <p className="eyebrow"><span></span> PROOF SURFACE / LIVE CORPUS</p>
+          <h2 id="results-heading">Inspect the<br /><em>record.</em></h2>
+          <p>
+            Results come straight from <code>/v1/search</code> — BM25 keyword retrieval with a
+            semantic re-rank. Each row keeps its source ledger.
+          </p>
+          <FilterSidebar
+            filters={filters}
+            facets={facets}
+            sort={sort}
+            onFilterChange={(f) => { setFilters(f); setOffset(0); }}
+            onSortChange={(s) => { setSort(s); setOffset(0); }}
+          />
+        </div>
 
-        {/* Results */}
-        <div className="flex-1 min-w-0">
+        <div className="result-ledger">
+          <div className="ledger-head">
+            <span>
+              {hasQuery && searchTimeMs !== null
+                ? `${total.toLocaleString()} records / ${searchTimeMs}ms`
+                : "Live corpus index"}
+            </span>
+            <span>CAPTURED BEFORE 2022</span>
+            <span>AUTHENTICITY</span>
+          </div>
 
-          {/* Stats */}
-          {!loading && query && searchTimeMs !== null && (
-            <div className="text-xs text-white/20 mb-4 font-light">
-              <span className="text-white/40">{total.toLocaleString()}</span> results in{" "}
-              <span className="text-white/40">{searchTimeMs}ms</span>
-            </div>
-          )}
-
-          {/* Error */}
           {error && (
-            <div className="liquid-glass rounded-xl p-4 text-sm text-red-400/80 mb-4 font-light">
+            <div className="ledger-error">
               {error}
-              <button onClick={() => runSearch(query, filters, sort, 0, false)} className="ml-3 text-white/40 hover:text-white/70 underline transition-colors">
-                Retry
-              </button>
+              <button onClick={() => runSearch(query, filters, sort, 0, false)}>Retry</button>
             </div>
           )}
 
-          {/* Skeletons */}
           {loading && (
-            <div>
-              {Array.from({ length: 5 }).map((_, i) => <ResultSkeleton key={i} />)}
-            </div>
+            <div>{Array.from({ length: 5 }).map((_, i) => <ResultSkeleton key={i} />)}</div>
           )}
 
-          {/* Result list */}
           {!loading && (
             <ErrorBoundary>
               <div>
@@ -269,53 +273,60 @@ export default function Search() {
                   <div
                     key={result.id}
                     ref={(el) => (resultRefs.current[i] = el)}
-                    className={focusedIndex === i ? "ring-1 ring-white/10 rounded-xl" : ""}
+                    style={focusedIndex === i ? { background: "var(--paper-deep)" } : undefined}
                     onMouseEnter={() => setFocusedIndex(i)}
                   >
-                    <ResultCard result={result} query={query} />
+                    <ResultCard result={result} index={i} />
                   </div>
                 ))}
               </div>
             </ErrorBoundary>
           )}
 
-          {/* Zero results */}
-          {!loading && !error && query && results.length === 0 && searchTimeMs !== null && (
-            <div className="text-center py-20 select-none">
-              <div className="text-4xl mb-4 opacity-20">∅</div>
-              <div className="text-sm text-white/30 font-light mb-1">
-                No results for <span className="text-white/50">"{query}"</span>
-              </div>
-              <div className="text-xs text-white/15 font-light">Try broader terms or adjust filters.</div>
+          {!loading && !error && hasQuery && results.length === 0 && searchTimeMs !== null && (
+            <div className="ledger-note">
+              No record matched “{query}”. Try broader terms or clear a filter. A production
+              search explains zero results without inventing them.
             </div>
           )}
 
-          {/* Load more */}
+          {!loading && !hasQuery && (
+            <div className="ledger-note">
+              Enter a query above to search the frozen corpus. Filters compose with the query;
+              scored and unscored are distinct, honestly-labeled states.
+            </div>
+          )}
+
           {!loading && hasMore && (
-            <div className="mt-8 text-center">
-              <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="liquid-glass rounded-full px-8 py-2.5 text-sm text-white/40
-                           hover:text-white/70 transition-colors font-light
-                           disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                {loadingMore ? "Loading…" : `Load more · ${total - results.length} remaining`}
-              </button>
-            </div>
+            <button className="load-more" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? "Loading…" : `Load more · ${(total - results.length).toLocaleString()} remaining`}
+            </button>
           )}
 
-          {/* Empty state */}
-          {!query && !loading && (
-            <div className="text-center py-28 select-none">
-              <div className="text-6xl mb-6 opacity-[0.06]">❄</div>
-              <div className="text-sm text-white/15 font-light">The human web. Preserved.</div>
-              <div className="text-xs text-white/8 font-light mt-2">Pre-2022 · BM25 search · No AI content</div>
-            </div>
-          )}
-
+          <div className="ledger-foot">
+            <p><i className="signal scored"></i><b>Scored</b> means a judge result exists.</p>
+            <p><i className="signal unscored"></i><b>Unscored</b> is a distinct state, not a certification claim.</p>
+            <a href={askHref}>Ask from these sources <span aria-hidden="true">→</span></a>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* ── Promise band ─────────────────────────────────────────────────── */}
+      <section className="promise-band">
+        <p className="eyebrow"><span></span> A SEARCH API WITH RECEIPTS</p>
+        <div>
+          <h2>The result is more<br />than a <em>snippet.</em></h2>
+          <p>
+            URL, archive URL, captured timestamp, domain, and human score travel together. The
+            same source ledger powers Search, Ask, and every agent call.
+          </p>
+        </div>
+        <div className="promise-index">
+          <span>01 / SEARCH</span>
+          <span>02 / ASK</span>
+          <span>03 / BUILD</span>
+        </div>
+      </section>
+    </>
   );
 }

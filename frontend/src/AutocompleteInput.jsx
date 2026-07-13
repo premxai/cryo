@@ -1,5 +1,5 @@
 /**
- * AutocompleteInput — liquid glass search bar with suggestion dropdown.
+ * AutocompleteInput — hero-search bar with an archive suggestion dropdown.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -74,40 +74,28 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
   }
 
   return (
-    <div ref={containerRef} className="relative w-full">
-      <div className="relative liquid-glass-strong rounded-2xl">
-        <input
-          ref={inputEl}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
-          placeholder="Search the human web..."
-          autoComplete="off"
-          spellCheck="false"
-          className="w-full bg-transparent text-white placeholder-white/25
-                     px-6 py-4 text-base focus:outline-none rounded-2xl
-                     font-light tracking-wide"
-          style={{ fontFamily: 'var(--font-body)' }}
-        />
-        {value && (
-          <button
-            onClick={() => { onChange(""); setSuggestions([]); setOpen(false); inputEl.current?.focus(); }}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-white/30
-                       hover:text-white/70 text-xl leading-none transition-colors"
-            aria-label="Clear search"
-          >
-            ×
-          </button>
-        )}
-      </div>
+    <form
+      ref={containerRef}
+      className="hero-search"
+      onSubmit={(e) => { e.preventDefault(); setOpen(false); onSearch(value); }}
+    >
+      <label className="sr-only" htmlFor="hero-query">Search the frozen human web</label>
+      <input
+        id="hero-query"
+        ref={inputEl}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        placeholder="Search the frozen human web…"
+        autoComplete="off"
+        spellCheck="false"
+      />
+      <button type="submit">Search <span aria-hidden="true">→</span></button>
 
       {open && suggestions.length > 0 && (
-        <ul
-          className="absolute z-50 w-full mt-2 liquid-glass-strong rounded-xl overflow-hidden shadow-2xl"
-          role="listbox"
-        >
+        <ul className="suggest-list" role="listbox">
           {suggestions.map((s, i) => (
             <li
               key={s}
@@ -115,18 +103,12 @@ export default function AutocompleteInput({ value, onChange, onSearch, inputRef:
               aria-selected={i === activeIndex}
               onMouseDown={() => selectSuggestion(s)}
               onMouseEnter={() => setActiveIndex(i)}
-              className={`px-5 py-2.5 text-sm cursor-pointer transition-colors font-light ${
-                i === activeIndex
-                  ? "bg-white/10 text-white"
-                  : "text-white/50 hover:bg-white/5 hover:text-white/80"
-              }`}
             >
-              <span className="mr-2 text-white/20">↗</span>
-              {s}
+              <span aria-hidden="true">↗</span>{s}
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </form>
   );
 }

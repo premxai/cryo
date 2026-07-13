@@ -1,132 +1,45 @@
-const API_URL = import.meta.env.VITE_API_URL || window.location.origin
+import { useState } from 'react'
 
-/**
- * Code block with a muted label.
- */
-function Code({ label, children }) {
-  return (
-    <div className="mb-6">
-      <div className="text-xs text-white/40 mb-1.5 tracking-wide">{label}</div>
-      <pre className="liquid-glass rounded-xl p-4 text-xs text-white/80 overflow-x-auto whitespace-pre leading-relaxed">
-        {children}
-      </pre>
-    </div>
-  )
-}
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.cryoweb.xyz'
 
-/**
- * Docs — quickstart for the /v1 REST API and the hosted MCP server.
- */
-export default function Docs() {
-  return (
-    <div className="w-full max-w-3xl pb-16">
-      <h1 className="gradient-heading text-3xl mb-2">API Documentation</h1>
-      <p className="text-sm text-white/50 mb-10 font-light">
-        Search and browse the frozen pre-2022 human web. Get a key from the{' '}
-        <a href="#/dashboard" className="text-white/80 underline underline-offset-2">dashboard</a>,
-        then authenticate every request with <code className="text-white/70">Authorization: Bearer cryo_sk_...</code>
-      </p>
-
-      <h2 className="text-lg text-white/90 mb-4">Search</h2>
-      <Code label="POST /v1/search">
-{`curl -X POST ${API_URL}/v1/search \\
+const SNIPPETS = {
+  curl: {
+    caption: 'Search with your API key.',
+    code: `curl -X POST ${API_URL}/v1/search \\
   -H "Authorization: Bearer cryo_sk_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"query": "how to start a startup", "num_results": 10}'`}
-      </Code>
-
-      <h2 className="text-lg text-white/90 mb-4">Read full pages (the browse loop)</h2>
-      <p className="text-sm text-white/50 mb-4 font-light">
-        Fetch full text by result id or any URL — pages not yet in the corpus are pulled live
-        from the Wayback Machine (always pre-2022 snapshots) and frozen in. Live fetches
-        return outbound links your agent can follow.
-      </p>
-      <Code label="POST /v1/contents">
-{`curl -X POST ${API_URL}/v1/contents \\
-  -H "Authorization: Bearer cryo_sk_YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"urls": ["http://paulgraham.com/ds.html"], "timestamp": "20200101"}'`}
-      </Code>
-
-      <h2 className="text-lg text-white/90 mb-4">Ask the pre-AI web</h2>
-      <p className="text-sm text-white/50 mb-4 font-light">
-        Grounded answers citing only frozen pre-2022 snapshots — each citation carries an
-        immutable archive link, capture timestamp, and authenticity score. Costs 3 quota units.
-      </p>
-      <Code label="POST /v1/answer">
-{`curl -X POST ${API_URL}/v1/answer \\
-  -H "Authorization: Bearer cryo_sk_YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"query": "what did people think about remote work?", "num_sources": 6}'`}
-      </Code>
-
-      <h2 className="text-lg text-white/90 mb-4">Browse a domain's archive</h2>
-      <Code label="POST /v1/list-domain">
-{`curl -X POST ${API_URL}/v1/list-domain \\
-  -H "Authorization: Bearer cryo_sk_YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"domain": "paulgraham.com", "limit": 50}'`}
-      </Code>
-
-      <h2 className="text-lg text-white/90 mb-4">Find similar</h2>
-      <Code label="POST /v1/find-similar">
-{`curl -X POST ${API_URL}/v1/find-similar \\
-  -H "Authorization: Bearer cryo_sk_YOUR_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"id": "SOURCE_DOC_ID", "num_results": 10}'`}
-      </Code>
-
-      <h2 className="text-lg text-white/90 mb-4">Python</h2>
-      <Code label="httpx">
-{`import httpx
-
-API = "${API_URL}"
-HEADERS = {"Authorization": "Bearer cryo_sk_YOUR_KEY"}
-
-r = httpx.post(f"{API}/v1/search", headers=HEADERS,
-               json={"query": "geocities culture", "num_results": 5})
-for hit in r.json()["results"]:
-    page = httpx.post(f"{API}/v1/contents", headers=HEADERS,
-                      json={"ids": [hit["id"]]}).json()
-    print(hit["url"], len(page["results"][0]["text"]))`}
-      </Code>
-
-      <h2 className="text-lg text-white/90 mb-4">Python SDK</h2>
-      <Code label="pip install cryo-search">
-{`from cryo_search import CryoClient
+  -d '{"query": "coastal cities", "num_results": 10}'`,
+  },
+  python: {
+    caption: 'Use the typed SDK for the same query.',
+    code: `# pip install cryo-search
+from cryo_search import CryoClient
 
 cryo = CryoClient(api_key="cryo_sk_YOUR_KEY")
 
-results = cryo.search("geocities culture", num_results=5)
+results = cryo.search("coastal cities", num_results=5)
 page = cryo.contents(ids=[results[0].id])
 answer = cryo.answer("what was the early web like?")
-print(answer.answer)
 for c in answer.citations:
-    print(f"  [{c.index}] {c.url} (frozen {c.timestamp[:8]})")`}
-      </Code>
-      <Code label="LangChain">
-{`# pip install "cryo-search[langchain]"
+    print(c.index, c.url, c.timestamp[:8])`,
+  },
+  agent: {
+    caption: 'Drop ledger-aware tools into any LangChain / LangGraph agent.',
+    code: `# pip install "cryo-search[langchain]"
 from cryo_search.langchain import CryoSearchTool, CryoAnswerTool
 
-tools = [CryoSearchTool(api_key="cryo_sk_YOUR_KEY"),
-         CryoAnswerTool(api_key="cryo_sk_YOUR_KEY")]
-# drop into any LangChain / LangGraph agent`}
-      </Code>
+tools = [
+    CryoSearchTool(api_key="cryo_sk_YOUR_KEY"),
+    CryoAnswerTool(api_key="cryo_sk_YOUR_KEY"),
+]`,
+  },
+  mcp: {
+    caption: 'Add CRYO to Claude Code or another MCP client.',
+    code: `claude mcp add --transport http cryo ${API_URL}/mcp/ \\
+  --header "Authorization: Bearer cryo_sk_YOUR_KEY"
 
-      <h2 className="text-lg text-white/90 mb-4">MCP — use Cryo from Claude</h2>
-      <p className="text-sm text-white/50 mb-4 font-light">
-        A hosted MCP server exposes <code className="text-white/70">cryo_search</code>,{' '}
-        <code className="text-white/70">cryo_get_page</code>,{' '}
-        <code className="text-white/70">cryo_find_similar</code>,{' '}
-        <code className="text-white/70">cryo_list_domain</code> and{' '}
-        <code className="text-white/70">cryo_answer</code> as native agent tools.
-      </p>
-      <Code label="Claude Code">
-{`claude mcp add --transport http cryo ${API_URL}/mcp/ \\
-  --header "Authorization: Bearer cryo_sk_YOUR_KEY"`}
-      </Code>
-      <Code label="MCP client config (JSON)">
-{`{
+# or, MCP client config:
+{
   "mcpServers": {
     "cryo": {
       "type": "http",
@@ -134,20 +47,138 @@ tools = [CryoSearchTool(api_key="cryo_sk_YOUR_KEY"),
       "headers": { "Authorization": "Bearer cryo_sk_YOUR_KEY" }
     }
   }
-}`}
-      </Code>
+}`,
+  },
+}
 
-      <h2 className="text-lg text-white/90 mb-4">Limits & errors</h2>
-      <div className="text-sm text-white/50 font-light space-y-2 mb-6">
-        <p>Free tier: 1,000 requests/month, 60 requests/minute per key. Each /v1/contents item counts as one request.</p>
-        <p>Responses carry <code className="text-white/70">X-RateLimit-Remaining</code> and{' '}
-        <code className="text-white/70">X-Quota-Remaining</code> headers; check{' '}
-        <code className="text-white/70">GET /v1/usage</code> for a monthly breakdown.</p>
-        <p>Errors are always{' '}
-        <code className="text-white/70">{'{"error": {"type", "message", "request_id"}}'}</code>{' '}
-        — types include <code className="text-white/70">rate_limited</code> (with Retry-After) and{' '}
-        <code className="text-white/70">quota_exceeded</code>.</p>
-      </div>
-    </div>
+const TABS = [
+  { key: 'curl', label: 'cURL' },
+  { key: 'python', label: 'Python' },
+  { key: 'agent', label: 'Agent tool' },
+  { key: 'mcp', label: 'MCP' },
+]
+
+const ENDPOINTS = [
+  { method: 'POST /v1/search', desc: 'Query the frozen corpus with filters and a returned source ledger.', cost: '1 UNIT' },
+  { method: 'POST /v1/contents', desc: "Retrieve a source's full text and archive metadata (live Wayback fallback).", cost: '1 UNIT' },
+  { method: 'POST /v1/find-similar', desc: 'Find adjacent material from a known corpus document.', cost: '3 UNITS' },
+  { method: 'POST /v1/answer', desc: 'Grounded synthesis, citations required, error state if unavailable.', cost: '3 UNITS' },
+  { method: 'POST /v1/list-domain', desc: "Inspect the available capture set for a domain.", cost: '1 UNIT' },
+  { method: 'GET /v1/usage', desc: 'Read current-period endpoint usage and reset time.', cost: '0 UNITS' },
+]
+
+/**
+ * Docs — one source-ledger contract across REST, SDK, and MCP.
+ */
+export default function Docs() {
+  const [tab, setTab] = useState('curl')
+  const [copyLabel, setCopyLabel] = useState('Copy snippet')
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(SNIPPETS[tab].code)
+      setCopyLabel('Copied')
+    } catch {
+      setCopyLabel('Copy failed — select text')
+    }
+    setTimeout(() => setCopyLabel('Copy snippet'), 1800)
+  }
+
+  return (
+    <>
+      <section className="page-intro docs-intro">
+        <p className="eyebrow"><span></span> DEVELOPER REFERENCE / V1</p>
+        <h1>Build on a web<br />you can <em>inspect.</em></h1>
+        <p>One source-ledger contract across REST, SDK, and MCP. Pick the interface; keep the context.</p>
+      </section>
+
+      <section className="quickstart">
+        <aside>
+          <p>START HERE</p>
+          <a href="#endpoints">Endpoints</a>
+          <a href="#mcp">MCP server</a>
+          <a href="#errors">Error model</a>
+          <a href="#/dashboard">Get a key</a>
+          <p className="side-note">
+            Every response includes source URLs, capture dates, and an authenticity state. An
+            absent score is rendered as <b>unscored</b>, never as a score.
+          </p>
+        </aside>
+        <div className="code-area">
+          <div className="code-head">
+            <p>FIRST REQUEST</p>
+            <div className="code-tabs" role="tablist" aria-label="Quickstart language">
+              {TABS.map((t) => (
+                <button
+                  key={t.key}
+                  className={`code-tab${tab === t.key ? ' is-active' : ''}`}
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  onClick={() => setTab(t.key)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <pre><code>{SNIPPETS[tab].code}</code></pre>
+          <div className="code-foot">
+            <span>{SNIPPETS[tab].caption}</span>
+            <button type="button" className="copy-button" onClick={copy}>{copyLabel}</button>
+          </div>
+        </div>
+      </section>
+
+      <section className="endpoint-section" id="endpoints">
+        <p className="eyebrow"><span></span> ENDPOINTS / QUOTA IS EXPLICIT</p>
+        <h2>Small surface.<br /><em>Clear contracts.</em></h2>
+        <div className="endpoint-list">
+          {ENDPOINTS.map((e) => (
+            <article key={e.method}>
+              <code>{e.method}</code>
+              <p>{e.desc}</p>
+              <span>{e.cost}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="docs-two-up">
+        <article id="mcp">
+          <p className="eyebrow"><span></span> MCP SERVER</p>
+          <h2>Give an agent<br />a ledger.</h2>
+          <p>
+            Connect CRYO with five visible tools: <code>cryo_search</code>,{' '}
+            <code>cryo_get_page</code>, <code>cryo_find_similar</code>,{' '}
+            <code>cryo_list_domain</code>, and <code>cryo_answer</code>.
+          </p>
+          <pre className="mini-code"><code>{`claude mcp add --transport http cryo \\
+  ${API_URL}/mcp/ \\
+  --header "Authorization: Bearer cryo_sk_..."`}</code></pre>
+          <a href="#/dashboard">Create a key <span aria-hidden="true">→</span></a>
+        </article>
+        <article id="errors">
+          <p className="eyebrow"><span></span> ERROR MODEL</p>
+          <h2>Failures should<br />be <em>useful.</em></h2>
+          <dl>
+            <div><dt>401</dt><dd>Missing or invalid key. Create or replace it.</dd></div>
+            <div><dt>429</dt><dd>Rate limit hit. Retry after the returned interval.</dd></div>
+            <div><dt>402 / 403</dt><dd>Quota exhausted. Show reset date and pricing.</dd></div>
+            <div><dt>503</dt><dd>Answer service unavailable. Never fabricate a response.</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section className="method-note" id="method">
+        <p className="eyebrow"><span></span> METHODOLOGY</p>
+        <h2>Marketing stops<br />where the data <em>does.</em></h2>
+        <p>
+          Documentation publishes corpus provenance, judge configuration, and the current share
+          of scored versus pending documents. The interface surfaces <b>unscored</b> wherever a
+          score does not exist.
+        </p>
+        <a href="#/pricing">See quota policy <span aria-hidden="true">→</span></a>
+      </section>
+    </>
   )
 }

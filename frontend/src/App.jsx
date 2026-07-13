@@ -4,10 +4,11 @@ import Docs from './Docs.jsx'
 import Dashboard from './Dashboard.jsx'
 import Playground from './Playground.jsx'
 import Pricing from './Pricing.jsx'
+import brandMark from './assets/cryo-archive-mark.png'
 
 /**
  * Parse the location hash into { route, params }.
- * Routes: #/ (search demo), #/docs, #/dashboard, #/verify?token=...
+ * Routes: #/ (search), #/ask, #/docs, #/pricing, #/dashboard, #/verify?token=...
  */
 function parseHash() {
   const hash = window.location.hash.replace(/^#\/?/, '')
@@ -15,61 +16,73 @@ function parseHash() {
   return { route: path || '', params: new URLSearchParams(query || '') }
 }
 
+const NAV = [
+  { href: '#/', label: 'Search', match: (r) => r === '' },
+  { href: '#/ask', label: 'Ask', match: (r) => r === 'ask' },
+  { href: '#/docs', label: 'Docs', match: (r) => r === 'docs' },
+  { href: '#/pricing', label: 'Pricing', match: (r) => r === 'pricing' },
+]
+
 /**
- * App — root layout with floating pill navbar and a tiny hash router.
+ * App — archive-editorial shell: three-tier header, hash router, footer.
  */
 export default function App() {
   const [{ route, params }, setLocation] = useState(parseHash)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    const onHashChange = () => setLocation(parseHash())
+    const onHashChange = () => { setLocation(parseHash()); setMenuOpen(false) }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  const navLink = (href, label, active) => (
-    <a
-      href={href}
-      className={`text-xs transition-colors font-light tracking-wide ${
-        active ? 'text-white/80' : 'text-white/30 hover:text-white/60'
-      }`}
-    >
-      {label}
-    </a>
-  )
+  const isHome = route === ''
+
+  const footers = {
+    '': ['CRYO / FROZEN WEB INFRASTRUCTURE', 'STATUS: LIVE CORPUS', '© 2026'],
+    ask: ['CRYO / GROUNDED Q&A', 'NO SILENT SYNTHESIS', '© 2026'],
+    docs: ['CRYO / API REFERENCE', 'V1 / DOCUMENTATION', '© 2026'],
+    pricing: ['CRYO / QUOTA POLICY', 'PAID BILLING: NOT LIVE', '© 2026'],
+    dashboard: ['CRYO / ACCOUNT SURFACE', 'MAGIC-LINK AUTH', '© 2026'],
+    verify: ['CRYO / ACCOUNT SURFACE', 'MAGIC-LINK AUTH', '© 2026'],
+  }
+  const foot = footers[route] || footers['']
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className={isHome ? 'home' : 'interior'}>
+      <a className="skip-link" href="#main">Skip to content</a>
 
-      {/* Floating pill navbar */}
-      <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4">
-        <nav className="liquid-glass rounded-full px-6 py-2.5 flex items-center gap-5">
-          <a href="#/" className="gradient-heading text-lg leading-none select-none">
-            Cryo
-          </a>
-          <div className="w-px h-4 bg-white/10" />
-          <span className="text-xs text-white/40 font-light tracking-wide hidden sm:inline">
-            pre-2022 · human web
-          </span>
-          <div className="w-px h-4 bg-white/10 hidden sm:block" />
-          {navLink('#/', 'Search', route === '')}
-          {navLink('#/ask', 'Ask', route === 'ask')}
-          {navLink('#/docs', 'Docs', route === 'docs')}
-          {navLink('#/pricing', 'Pricing', route === 'pricing')}
-          {navLink('#/dashboard', 'Keys', route === 'dashboard' || route === 'verify')}
-          <a
-            href="https://github.com/premxai/cryo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-white/30 hover:text-white/60 transition-colors font-light tracking-wide"
-          >
-            GitHub
-          </a>
+      <header className="site-header">
+        <a className="brand" href="#/" aria-label="CRYO home">
+          <img src={brandMark} alt="" />
+          <span>CRYO</span>
+        </a>
+        <button
+          className="menu-button"
+          type="button"
+          aria-expanded={menuOpen}
+          aria-controls="site-nav"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          Menu <span aria-hidden="true">+</span>
+        </button>
+        <nav className={`site-nav${menuOpen ? ' is-open' : ''}`} id="site-nav" aria-label="Primary navigation">
+          {NAV.map((n) => (
+            <a key={n.href} href={n.href} aria-current={n.match(route) ? 'page' : undefined}>
+              {n.label}
+            </a>
+          ))}
         </nav>
+        <div className="header-actions" aria-label="Account actions">
+          <a className="account-link" href="#/dashboard">Log in</a>
+          <a className="signup-link" href="#/dashboard">Sign up</a>
+          <a className="key-link" href="#/dashboard" aria-current={route === 'dashboard' || route === 'verify' ? 'page' : undefined}>
+            Get API key <span aria-hidden="true">↗</span>
+          </a>
+        </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col items-center pt-24 px-4">
+      <main id="main">
         {route === 'ask' && <Playground />}
         {route === 'docs' && <Docs />}
         {route === 'pricing' && <Pricing />}
@@ -79,13 +92,11 @@ export default function App() {
         {!['ask', 'docs', 'pricing', 'dashboard', 'verify'].includes(route) && <Search />}
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 text-center">
-        <span className="text-xs text-white/15 font-light tracking-widest">
-          frozen at 2021 · authentic human content only
-        </span>
+      <footer className="site-footer">
+        <span>{foot[0]}</span>
+        <span>{foot[1]}</span>
+        <span>{foot[2]}</span>
       </footer>
-
     </div>
   )
 }
