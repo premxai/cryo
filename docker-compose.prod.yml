@@ -62,12 +62,16 @@ services:
     volumes:
       - /opt/cryo/data:/app/data
     environment:
+      - ENV=production
       - MEILISEARCH_URL=http://meilisearch:7700
       - MEILISEARCH_KEY=${MEILISEARCH_KEY}
       - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@postgres:5432/cryo
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://cryoweb.xyz}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
     depends_on:
       meilisearch:
         condition: service_healthy
