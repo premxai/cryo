@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSession, setSession as saveSession, clearSession } from './useSession'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
-const SESSION_KEY = 'cryo_session'
 
 /**
  * Dashboard — magic-link sign-in plus API key management.
  * Also handles the #/verify?token=... landing from the emailed link.
  */
 export default function Dashboard({ verifyToken }) {
-  const [session, setSession] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY)) } catch { return null }
-  })
+  const session = useSession()
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState('')
   const [statusReady, setStatusReady] = useState(false)
@@ -33,8 +31,7 @@ export default function Dashboard({ verifyToken }) {
     })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((data) => {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(data))
-        setSession(data)
+        saveSession(data)
         window.location.hash = '#/dashboard'
       })
       .catch(() => setStatus('Sign-in link is invalid or expired — request a new one.'))
@@ -45,8 +42,7 @@ export default function Dashboard({ verifyToken }) {
     fetch(`${API_URL}/v1/auth/keys`, { headers: authHeaders() })
       .then((r) => {
         if (r.status === 401) {
-          localStorage.removeItem(SESSION_KEY)
-          setSession(null)
+          clearSession()
           return []
         }
         return r.json()
@@ -94,8 +90,7 @@ export default function Dashboard({ verifyToken }) {
   }
 
   function signOut() {
-    localStorage.removeItem(SESSION_KEY)
-    setSession(null)
+    clearSession()
     setKeys([])
     setNewKey(null)
   }
@@ -151,6 +146,9 @@ export default function Dashboard({ verifyToken }) {
         <p className="eyebrow"><span></span> ACCOUNT / {session.email}</p>
         <h1>Keys with<br /><em>consequences.</em></h1>
         <p>Create a named key, use it across REST, SDK, and MCP, and revoke it the moment it leaks.</p>
+        <a className="ink-button" href="#/app" style={{ display: 'inline-block', marginTop: '1.5rem' }}>
+          Open search console <span aria-hidden="true">→</span>
+        </a>
       </section>
 
       <section className="usage-strip">
