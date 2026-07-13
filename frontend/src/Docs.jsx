@@ -12,7 +12,8 @@ const SNIPPETS = {
   },
   python: {
     caption: 'Use the typed SDK for the same query.',
-    code: `# pip install cryo-search
+    code: `# beta: pip install "git+https://github.com/premxai/cryo#subdirectory=sdk"
+# (PyPI package publishing soon)
 from cryo_search import CryoClient
 
 cryo = CryoClient(api_key="cryo_sk_YOUR_KEY")
@@ -25,7 +26,7 @@ for c in answer.citations:
   },
   agent: {
     caption: 'Drop ledger-aware tools into any LangChain / LangGraph agent.',
-    code: `# pip install "cryo-search[langchain]"
+    code: `# beta: pip install "git+https://github.com/premxai/cryo#subdirectory=sdk"
 from cryo_search.langchain import CryoSearchTool, CryoAnswerTool
 
 tools = [

@@ -197,7 +197,7 @@ export default function Search() {
           <h2>However your<br />stack works.</h2>
           <dl>
             <div><dt>REST</dt><dd>POST /v1/search · /contents · /answer · /find-similar · /list-domain</dd></div>
-            <div><dt>SDK</dt><dd>pip install cryo-search — typed client with retries and the full ledger</dd></div>
+            <div><dt>SDK</dt><dd>Typed Python client (cryo-search) with retries and the full ledger — beta, on GitHub</dd></div>
             <div><dt>Agents</dt><dd>CryoSearchTool + CryoAnswerTool for LangChain / LlamaIndex</dd></div>
             <div><dt>MCP</dt><dd>Five native tools for Claude Code &amp; Desktop at /mcp</dd></div>
           </dl>
