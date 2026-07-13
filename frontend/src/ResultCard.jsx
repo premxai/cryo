@@ -5,19 +5,14 @@
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-function formatCapture(ts) {
-  if (!ts || ts.length < 8) return ts || "";
-  const year = ts.slice(0, 4);
-  const month = parseInt(ts.slice(4, 6), 10);
-  const day = ts.slice(6, 8);
-  return `${year}-${String(month).padStart(2, "0")}-${day}`;
-}
-
 function shortMonth(ts) {
   if (!ts || ts.length < 6) return "";
-  const year = ts.slice(0, 4);
-  const month = parseInt(ts.slice(4, 6), 10);
-  return `${MONTHS[month - 1] || "?"} ${year}`;
+  // Handles both compact (YYYYMMDD…) and ISO (YYYY-MM-DD…) timestamps.
+  const digits = ts.replace(/\D/g, "");
+  if (digits.length < 6) return ts.slice(0, 4);
+  const year = digits.slice(0, 4);
+  const month = parseInt(digits.slice(4, 6), 10);
+  return `${MONTHS[month - 1] || ""} ${year}`.trim();
 }
 
 function domainOf(url) {
