@@ -78,10 +78,10 @@ def clean_doc(raw: dict) -> dict | None:
     """Transform a raw FineWeb record into a Cryo document. Returns None to skip."""
     url = raw.get("url", "")
     text_raw = raw.get("text", "")
-    timestamp = raw.get("timestamp", "")
-    crawl = raw.get("crawl", "")
+    timestamp = raw.get("date", "")
+    dump = raw.get("dump", "")
 
-    if not is_pre_2022(crawl):
+    if not is_pre_2022(dump):
         return None
 
     text = strip_html(text_raw)
