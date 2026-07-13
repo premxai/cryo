@@ -10,11 +10,14 @@ Usage:
 
 import argparse
 import json
+import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, ".")  # allow `python pipeline/ingest_wikipedia.py` from repo root
 
 from pipeline.ingest_utils import (
     append_jsonl,
