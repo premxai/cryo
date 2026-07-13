@@ -328,6 +328,60 @@ export default function Search() {
           <span>03 / BUILD</span>
         </div>
       </section>
+
+      {/* ── The loop: how an agent uses it ───────────────────────────────── */}
+      <section className="endpoint-section">
+        <p className="eyebrow"><span></span> THE LOOP / SEARCH → READ → BROWSE → ASK</p>
+        <h2>Built for agents that<br /><em>show their work.</em></h2>
+        <div className="endpoint-list cols-4">
+          <article>
+            <code>01 / SEARCH</code>
+            <p>Query the frozen corpus. Every hit returns its URL, capture date, domain, and authenticity state.</p>
+            <span>cryo_search</span>
+          </article>
+          <article>
+            <code>02 / READ</code>
+            <p>Pull full page text by id or URL. Missing pages are fetched live from pre-2022 Wayback snapshots and frozen in.</p>
+            <span>cryo_get_page</span>
+          </article>
+          <article>
+            <code>03 / BROWSE</code>
+            <p>Enumerate a domain's captured archive to walk an era of a site, not just one page.</p>
+            <span>cryo_list_domain</span>
+          </article>
+          <article>
+            <code>04 / ASK</code>
+            <p>Grounded synthesis citing only frozen snapshots — every claim traces back to a ledger entry.</p>
+            <span>cryo_answer</span>
+          </article>
+        </div>
+      </section>
+
+      {/* ── Four ways in ─────────────────────────────────────────────────── */}
+      <section className="docs-two-up">
+        <article>
+          <p className="eyebrow"><span></span> WHY A FROZEN CORPUS</p>
+          <h2>The web is filling<br />with <em>machine text.</em></h2>
+          <p>
+            Cryo indexes only content captured before 2022 — before generative models began
+            flooding the open web. Its answers cannot be contaminated by AI-written pages, by
+            construction, and it proves it per document: capture timestamp, source, archive link,
+            and an authenticity score.
+          </p>
+          <a href="#/docs">Read the methodology <span aria-hidden="true">→</span></a>
+        </article>
+        <article>
+          <p className="eyebrow"><span></span> FOUR WAYS IN</p>
+          <h2>However your<br />stack works.</h2>
+          <dl>
+            <div><dt>REST</dt><dd>POST /v1/search · /contents · /answer · /find-similar · /list-domain</dd></div>
+            <div><dt>SDK</dt><dd>pip install cryo-search — typed client with retries and the full ledger</dd></div>
+            <div><dt>Agents</dt><dd>CryoSearchTool + CryoAnswerTool for LangChain / LlamaIndex</dd></div>
+            <div><dt>MCP</dt><dd>Five native tools for Claude Code &amp; Desktop at /mcp</dd></div>
+          </dl>
+          <a href="#/docs">Open the docs <span aria-hidden="true">→</span></a>
+        </article>
+      </section>
     </>
   );
 }

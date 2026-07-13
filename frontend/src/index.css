@@ -294,6 +294,7 @@ button { cursor: pointer; }
 .endpoint-section { padding: 6rem var(--gutter); border-bottom: 1px solid var(--line); }
 .endpoint-section h2 { margin: .9rem 0 2.5rem; }
 .endpoint-list { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--ink); border-left: 1px solid var(--line); }
+.endpoint-list.cols-4 { grid-template-columns: repeat(4, 1fr); }
 .endpoint-list article { padding: 1.2rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 170px; display: flex; flex-direction: column; }
 .endpoint-list code { font: 500 12px var(--mono); color: var(--blue); }
 .endpoint-list p { font-size: 1.05rem; line-height: 1.3; }
@@ -489,7 +490,7 @@ button { cursor: pointer; }
   .code-tabs { overflow: auto; margin-top: .7rem; }
   .code-area pre { min-height: 280px; padding: 1.2rem; font-size: 10px; }
   .endpoint-section { padding: 3.5rem 1.25rem; }
-  .endpoint-list { grid-template-columns: 1fr; }
+  .endpoint-list, .endpoint-list.cols-4 { grid-template-columns: 1fr; }
   .docs-two-up { display: block; }
   .docs-two-up article { padding: 3.5rem 1.25rem; }
   .docs-two-up article + article { border-left: 0; border-top: 1px solid rgba(255, 255, 255, .25); }
