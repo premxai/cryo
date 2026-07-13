@@ -11,6 +11,7 @@ import AutocompleteInput from "./AutocompleteInput";
 import ErrorBoundary from "./ErrorBoundary";
 import FilterSidebar from "./FilterSidebar";
 import ResultCard from "./ResultCard";
+import cubeImg from "./assets/frozen-corpus-cube.jpg";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 const PAGE_SIZE = 20;
@@ -215,7 +216,7 @@ export default function Search() {
         </div>
         <figure className="archive-figure" aria-labelledby="artifact-caption">
           <img
-            src={new URL("./assets/frozen-corpus-cube.png", import.meta.url).href}
+            src={cubeImg}
             alt="A monumental cube of clear ice preserving dense stacks of pre-2022 paper documents."
           />
           <figcaption id="artifact-caption">
