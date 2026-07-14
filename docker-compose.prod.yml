@@ -72,6 +72,8 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://cryoweb.xyz}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - CLERK_ISSUER=${CLERK_ISSUER:-}
+      - CLERK_JWKS_URL=${CLERK_JWKS_URL:-}
     depends_on:
       meilisearch:
         condition: service_healthy
