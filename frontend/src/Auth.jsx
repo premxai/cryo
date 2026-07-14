@@ -24,7 +24,6 @@ function ClerkAuthForm({ mode }) {
   const { isLoaded: signUpLoaded, signUp, setActive: setActiveUp } = useSignUp()
   const { isLoaded: signInLoaded, signIn, setActive: setActiveIn } = useSignIn()
 
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
@@ -44,7 +43,6 @@ function ClerkAuthForm({ mode }) {
         const res = await signUp.create({
           emailAddress: email,
           password,
-          firstName: name.trim() || undefined,
         })
         if (res.status === 'complete') {
           await setActiveUp({ session: res.createdSessionId })
@@ -109,7 +107,6 @@ function ClerkAuthForm({ mode }) {
   return (
     <AuthShell
       mode={mode}
-      name={name} setName={setName}
       email={email} setEmail={setEmail}
       password={password} setPassword={setPassword}
       verificationCode={verificationCode} setVerificationCode={setVerificationCode}
@@ -122,7 +119,7 @@ function ClerkAuthForm({ mode }) {
 /** Presentational auth-shell — used for both live and not-configured states. */
 function AuthShell({
   mode, notConfigured,
-  name, setName, email, setEmail, password, setPassword,
+  email, setEmail, password, setPassword,
   verificationCode, setVerificationCode, requiresVerification, onVerify,
   status, ready, busy, onSubmit,
 }) {
@@ -135,7 +132,7 @@ function AuthShell({
   const statusText = notConfigured
     ? 'Authentication is not configured yet on this deployment.'
     : (status || (isSignup
-        ? 'Name, email, and a password of 8+ characters.'
+        ? 'Email and a password of 8+ characters.'
         : 'Enter your email and password.'))
 
   return (
@@ -173,15 +170,7 @@ function AuthShell({
                   onChange={(e) => setVerificationCode?.(e.target.value)}
                 />
               </>
-            ) : isSignup && (
-              <>
-                <label htmlFor="auth-name">NAME</label>
-                <input
-                  id="auth-name" type="text" required autoComplete="name" disabled={notConfigured}
-                  placeholder="Ada Lovelace" value={name || ''} onChange={(e) => setName?.(e.target.value)}
-                />
-              </>
-            )}
+            ) : null}
             {!requiresVerification && (
               <>
                 <label htmlFor="auth-email">EMAIL ADDRESS</label>
