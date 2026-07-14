@@ -1,58 +1,101 @@
-"""Integration tests for dashboard auth routes (mocked DB + email)."""
+"""Integration tests for Clerk-authenticated dashboard routes."""
 
-from unittest.mock import AsyncMock, patch
+import uuid
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from backend.errors import APIError
+
 
 @pytest.fixture
-async def db_client(client):
-    """Client with the DB dependency mocked out."""
+async def clerk_client(client):
+    """Client with Clerk and database dependencies mocked."""
+    from backend.auth.clerk import require_clerk_user
+    from backend.auth.models import User
     from backend.db import get_db
     from backend.main import app
 
-    session = AsyncMock()
+    user = User(
+        id=uuid.uuid4(),
+        email="dev@example.com",
+        name="Dev User",
+        auth_user_id="user_test",
+    )
+    session = MagicMock()
+    session.execute = AsyncMock()
+    session.commit = AsyncMock()
+
+    async def refresh(key):
+        key.id = uuid.uuid4()
+        key.created_at = datetime.now(UTC)
+
+    session.refresh = AsyncMock(side_effect=refresh)
 
     async def override_db():
         yield session
 
+    async def override_user():
+        return user
+
     app.dependency_overrides[get_db] = override_db
-    yield client, session
+    app.dependency_overrides[require_clerk_user] = override_user
+    yield client, user, session
     app.dependency_overrides.pop(get_db, None)
+    app.dependency_overrides.pop(require_clerk_user, None)
 
 
-async def test_magic_link_request_generic_response(db_client):
-    """Requesting a link stores a token and returns a generic message."""
-    client, session = db_client
-    with patch(
-        "backend.api.auth_routes.send_magic_link", new=AsyncMock(return_value=True)
-    ) as mock_send:
-        resp = await client.post("/v1/auth/magic-link", json={"email": "dev@example.com"})
-    assert resp.status_code == 200
-    assert "email" in resp.json()["message"].lower()
-    session.add.assert_called_once()
-    mock_send.assert_awaited_once()
-    # The emailed link carries the raw token, never the hash
-    link = mock_send.await_args.args[1]
-    assert "#/verify?token=" in link
+async def test_whoami_returns_the_clerk_authenticated_account(clerk_client):
+    """The dashboard can confirm the Clerk-authenticated account."""
+    client, _, _ = clerk_client
+    response = await client.get("/v1/auth/me")
+    assert response.status_code == 200
+    assert response.json() == {"email": "dev@example.com", "name": "Dev User"}
 
 
-async def test_magic_link_rejects_bad_email(db_client):
-    client, _ = db_client
-    resp = await client.post("/v1/auth/magic-link", json={"email": "not-an-email"})
-    assert resp.status_code == 422
+async def test_list_keys_is_scoped_to_the_clerk_user(clerk_client):
+    """The authenticated dashboard lists only the current user's keys."""
+    client, _, session = clerk_client
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = []
+    session.execute.return_value = result
+    response = await client.get("/v1/auth/keys")
+    assert response.status_code == 200
+    assert response.json() == []
+    assert session.execute.await_count == 1
+
+
+async def test_create_key_uses_the_clerk_authenticated_account(clerk_client):
+    """Creating a key associates it with the verified Clerk user."""
+    client, user, session = clerk_client
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = []
+    session.execute.return_value = result
+    response = await client.post("/v1/auth/keys", json={"name": "research-agent"})
+    assert response.status_code == 200
+    assert response.json()["key"].startswith("cryo_sk_")
+    key = session.add.call_args.args[0]
+    assert key.user_id == user.id
+    assert key.name == "research-agent"
+    session.commit.assert_awaited_once()
 
 
 async def test_keys_require_session(client):
-    """Key management without a session token → 401 invalid_session."""
-    resp = await client.get("/v1/auth/keys")
-    assert resp.status_code == 401
-    assert resp.json()["error"]["type"] == "invalid_session"
+    """Key management without a Clerk session token returns 401."""
+    response = await client.get("/v1/auth/keys")
+    assert response.status_code == 401
+    assert response.json()["error"]["type"] == "invalid_session"
 
 
 async def test_keys_reject_api_key_as_session(client):
-    """An API key is not a session token."""
-    resp = await client.get(
-        "/v1/auth/keys", headers={"Authorization": "Bearer cryo_sk_notasession"}
-    )
-    assert resp.status_code == 401
+    """An API key cannot be used in place of a Clerk session JWT."""
+    with patch(
+        "backend.auth.clerk._decode",
+        side_effect=APIError(401, "invalid_session", "Sign in again to manage your keys"),
+    ):
+        response = await client.get(
+            "/v1/auth/keys", headers={"Authorization": "Bearer cryo_sk_notasession"}
+        )
+    assert response.status_code == 401
+    assert response.json()["error"]["type"] == "invalid_session"

@@ -10,11 +10,10 @@ import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-react'
  * else reads useSession()/useClerkAuth() from that context.
  */
 
-// Clerk publishable keys are public by design (they ship in the client bundle),
-// so a default is safe here. Override via VITE_CLERK_PUBLISHABLE_KEY for prod (pk_live).
-const PUBLISHABLE_KEY =
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  'pk_test_d2VsbC1ld2UtOTQuY2xlcmsuYWNjb3VudHMuZGV2JA'
+// Clerk publishable keys are public by design (they ship in the client bundle).
+// A deployment must provide its own key; using a bundled test tenant would make
+// frontend and backend authentication point at different Clerk instances.
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 export const clerkConfigured = Boolean(PUBLISHABLE_KEY)
 
 const AuthContext = createContext({
