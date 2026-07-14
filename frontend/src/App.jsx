@@ -4,6 +4,7 @@ import AppSearch from './AppSearch.jsx'
 import Docs from './Docs.jsx'
 import Dashboard from './Dashboard.jsx'
 import Auth from './Auth.jsx'
+import Legal from './Legal.jsx'
 import Playground from './Playground.jsx'
 import Pricing from './Pricing.jsx'
 import { useSession, useClerkAuth } from './useSession.js'
@@ -138,13 +139,17 @@ export default function App() {
         {route === 'pricing' && <Pricing />}
         {route === 'login' && <Auth mode="login" />}
         {route === 'signup' && <Auth mode="signup" />}
+        {route === 'privacy' && <Legal mode="privacy" />}
+        {route === 'terms' && <Legal mode="terms" />}
         {route === 'dashboard' && <Dashboard />}
-        {!['app', 'ask', 'docs', 'pricing', 'dashboard', 'login', 'signup'].includes(route) && <Search />}
+        {!['app', 'ask', 'docs', 'pricing', 'dashboard', 'login', 'signup', 'privacy', 'terms'].includes(route) && <Search />}
       </main>
 
       <footer className="site-footer">
         <span>{foot[0]}</span>
-        <span>{foot[1]}</span>
+        <span className="footer-legal">
+          <a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a>
+        </span>
         <span>{foot[2]}</span>
       </footer>
     </div>

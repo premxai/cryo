@@ -238,6 +238,24 @@ button { cursor: pointer; }
 }
 .site-footer b { color: #a8c5ed; font-weight: 500; }
 
+/* ── Legal (privacy / terms) ─────────────────────────────────────────────── */
+.legal-doc { max-width: 760px; padding: clamp(3rem, 7vw, 6rem) var(--gutter) 5rem; }
+.legal-doc .eyebrow { margin-bottom: 1.2rem; }
+.legal-doc h1 { font: 800 clamp(3.4rem, 7vw, 6rem)/.85 var(--display); letter-spacing: -.05em; margin: 0 0 1rem; }
+.legal-doc h1 em { font-family: var(--body); font-weight: 400; }
+.legal-doc .updated { font: 400 10px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 0 0 2.5rem; }
+.legal-doc h2 { font: 750 1.7rem var(--display); letter-spacing: -.02em; margin: 2.6rem 0 .8rem; }
+.legal-doc p, .legal-doc li { font-size: 1.02rem; line-height: 1.55; color: var(--ink-soft); }
+.legal-doc p { margin: 0 0 1rem; }
+.legal-doc ul { margin: 0 0 1rem; padding-left: 1.1rem; }
+.legal-doc li { margin-bottom: .4rem; }
+.legal-doc a { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+.legal-doc strong { font-weight: 600; color: var(--ink); }
+.legal-doc .lead { font-size: 1.15rem; color: var(--ink); }
+
+.footer-legal a { color: #a8c5ed; }
+.footer-legal a:hover { color: var(--paper); }
+
 /* ── Interior pages ──────────────────────────────────────────────────────── */
 .interior { flex: 1; }
 .page-intro { padding: clamp(4rem, 9vw, 8rem) var(--gutter) 4.5rem; max-width: 960px; }
