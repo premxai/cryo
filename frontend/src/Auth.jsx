@@ -15,6 +15,10 @@ export default function Auth({ mode }) {
   return <ClerkAuthForm mode={mode} />
 }
 
+function clerkErrorDetail(err) {
+  return err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || err?.message
+}
+
 function ClerkAuthForm({ mode }) {
   const isSignup = mode === 'signup'
   const { isLoaded: signUpLoaded, signUp, setActive: setActiveUp } = useSignUp()
@@ -62,6 +66,11 @@ function ClerkAuthForm({ mode }) {
         }
       }
     } catch (err) {
+      const detail = clerkErrorDetail(err)
+      if (detail) {
+        setStatus(detail)
+        return
+      }
       setStatus(err?.errors?.[0]?.message || err?.message || 'Something went wrong — try again.')
     } finally {
       setBusy(false)
@@ -82,6 +91,11 @@ function ClerkAuthForm({ mode }) {
       await setActiveUp({ session: res.createdSessionId })
       finish()
     } catch (err) {
+      const detail = clerkErrorDetail(err)
+      if (detail) {
+        setStatus(detail)
+        return
+      }
       setStatus(err?.errors?.[0]?.message || err?.message || 'That code is not valid. Try again.')
     } finally {
       setBusy(false)
