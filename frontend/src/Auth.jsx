@@ -45,12 +45,10 @@ function ClerkAuthForm({ mode }) {
         if (res.status === 'complete') {
           await setActiveUp({ session: res.createdSessionId })
           finish()
-        } else if (res.unverifiedFields?.includes('email_address')) {
+        } else {
           await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
           setRequiresVerification(true)
           setStatus('We sent a verification code to your email address.')
-        } else {
-          setStatus('Your account needs an additional setup step in Clerk. Please try again.')
         }
       } else {
         const res = await signIn.create({ identifier: email, password })
