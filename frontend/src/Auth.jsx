@@ -37,10 +37,12 @@ function ClerkAuthForm({ mode }) {
     setStatus(isSignup ? 'Creating your account…' : 'Signing in…')
     try {
       if (isSignup) {
+        const [firstName, ...lastNameParts] = name.trim().split(/\s+/)
         const res = await signUp.create({
           emailAddress: email,
           password,
-          firstName: name.trim() || undefined,
+          firstName: firstName || undefined,
+          lastName: lastNameParts.join(' ') || undefined,
         })
         if (res.status === 'complete') {
           await setActiveUp({ session: res.createdSessionId })
@@ -183,6 +185,9 @@ function AuthShell({
                   onChange={(e) => setPassword?.(e.target.value)}
                 />
               </>
+            )}
+            {isSignup && !requiresVerification && !notConfigured && (
+              <div id="clerk-captcha" data-cl-theme="light" data-cl-size="flexible" />
             )}
             <button className="ink-button" type="submit" disabled={busy || notConfigured}>
               {requiresVerification ? 'Verify email' : isSignup ? 'Create account' : 'Log in'} <span aria-hidden="true">→</span>
