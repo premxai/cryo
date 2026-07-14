@@ -49,12 +49,14 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz/live')" \
   || exit 1
 
-# Production server: Gunicorn manages workers, UvicornWorker handles async
+# Production server: Gunicorn manages workers, UvicornWorker handles async.
+# 4 workers on the 6-core box; the CPU-bound semantic re-rank is capped to one
+# thread per worker (OMP/ORT env below) so workers don't oversubscribe cores.
 CMD ["gunicorn", "backend.main:app", \
-     "--workers", "2", \
+     "--workers", "4", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--bind", "0.0.0.0:8000", \
-     "--timeout", "30", \
+     "--timeout", "45", \
      "--graceful-timeout", "10", \
      "--access-logfile", "-", \
      "--error-logfile", "-"]

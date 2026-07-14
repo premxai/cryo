@@ -74,6 +74,10 @@ services:
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - CLERK_ISSUER=${CLERK_ISSUER:-}
       - CLERK_JWKS_URL=${CLERK_JWKS_URL:-}
+      # Cap the fastembed/ONNX re-rank to 1 thread per worker so 4 gunicorn
+      # workers share the 6 cores without oversubscribing under concurrency.
+      - OMP_NUM_THREADS=1
+      - ORT_NUM_THREADS=1
     depends_on:
       meilisearch:
         condition: service_healthy
