@@ -23,6 +23,8 @@ function ClerkAuthForm({ mode }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [requiresVerification, setRequiresVerification] = useState(false)
   const [status, setStatus] = useState('')
   const [ready, setReady] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -43,10 +45,12 @@ function ClerkAuthForm({ mode }) {
         if (res.status === 'complete') {
           await setActiveUp({ session: res.createdSessionId })
           finish()
+        } else if (res.unverifiedFields?.includes('email_address')) {
+          await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
+          setRequiresVerification(true)
+          setStatus('We sent a verification code to your email address.')
         } else {
-          // Only happens if email verification is enabled in Clerk.
-          setReady(true)
-          setStatus('Check your email to verify your account, then log in.')
+          setStatus('Your account needs an additional setup step in Clerk. Please try again.')
         }
       } else {
         const res = await signIn.create({ identifier: email, password })
@@ -64,6 +68,26 @@ function ClerkAuthForm({ mode }) {
     }
   }
 
+  async function verifyEmail(e) {
+    e.preventDefault()
+    if (!signUpLoaded || !verificationCode.trim()) return
+    setBusy(true)
+    setStatus('Verifying your email…')
+    try {
+      const res = await signUp.attemptEmailAddressVerification({ code: verificationCode.trim() })
+      if (res.status !== 'complete') {
+        setStatus('That code could not complete signup. Request a new code and try again.')
+        return
+      }
+      await setActiveUp({ session: res.createdSessionId })
+      finish()
+    } catch (err) {
+      setStatus(err?.errors?.[0]?.message || err?.message || 'That code is not valid. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   function finish() {
     setReady(true)
     setStatus('Signed in. Opening the console…')
@@ -76,6 +100,8 @@ function ClerkAuthForm({ mode }) {
       name={name} setName={setName}
       email={email} setEmail={setEmail}
       password={password} setPassword={setPassword}
+      verificationCode={verificationCode} setVerificationCode={setVerificationCode}
+      requiresVerification={requiresVerification} onVerify={verifyEmail}
       status={status} ready={ready} busy={busy} onSubmit={submit}
     />
   )
@@ -85,10 +111,13 @@ function ClerkAuthForm({ mode }) {
 function AuthShell({
   mode, notConfigured,
   name, setName, email, setEmail, password, setPassword,
+  verificationCode, setVerificationCode, requiresVerification, onVerify,
   status, ready, busy, onSubmit,
 }) {
   const isSignup = mode === 'signup'
-  const handle = notConfigured
+  const handle = requiresVerification
+    ? onVerify
+    : notConfigured
     ? (e) => e.preventDefault()
     : onSubmit
   const statusText = notConfigured
@@ -122,7 +151,17 @@ function AuthShell({
             {isSignup ? <>Sign<br /><em>up.</em></> : <>Log<br /><em>in.</em></>}
           </h2>
           <form className="auth-form" onSubmit={handle}>
-            {isSignup && (
+            {requiresVerification ? (
+              <>
+                <label htmlFor="auth-verification-code">EMAIL VERIFICATION CODE</label>
+                <input
+                  id="auth-verification-code" type="text" required inputMode="numeric"
+                  autoComplete="one-time-code" disabled={busy} placeholder="123456"
+                  value={verificationCode || ''}
+                  onChange={(e) => setVerificationCode?.(e.target.value)}
+                />
+              </>
+            ) : isSignup && (
               <>
                 <label htmlFor="auth-name">NAME</label>
                 <input
@@ -131,20 +170,24 @@ function AuthShell({
                 />
               </>
             )}
-            <label htmlFor="auth-email">EMAIL ADDRESS</label>
-            <input
-              id="auth-email" type="email" required autoComplete="email" disabled={notConfigured}
-              placeholder="you@company.com" value={email || ''} onChange={(e) => setEmail?.(e.target.value)}
-            />
-            <label htmlFor="auth-password">PASSWORD</label>
-            <input
-              id="auth-password" type="password" required minLength={8} disabled={notConfigured}
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-              placeholder="At least 8 characters" value={password || ''}
-              onChange={(e) => setPassword?.(e.target.value)}
-            />
+            {!requiresVerification && (
+              <>
+                <label htmlFor="auth-email">EMAIL ADDRESS</label>
+                <input
+                  id="auth-email" type="email" required autoComplete="email" disabled={notConfigured}
+                  placeholder="you@company.com" value={email || ''} onChange={(e) => setEmail?.(e.target.value)}
+                />
+                <label htmlFor="auth-password">PASSWORD</label>
+                <input
+                  id="auth-password" type="password" required minLength={8} disabled={notConfigured}
+                  autoComplete={isSignup ? 'new-password' : 'current-password'}
+                  placeholder="At least 8 characters" value={password || ''}
+                  onChange={(e) => setPassword?.(e.target.value)}
+                />
+              </>
+            )}
             <button className="ink-button" type="submit" disabled={busy || notConfigured}>
-              {isSignup ? 'Create account' : 'Log in'} <span aria-hidden="true">→</span>
+              {requiresVerification ? 'Verify email' : isSignup ? 'Create account' : 'Log in'} <span aria-hidden="true">→</span>
             </button>
             <p className={`auth-status${ready ? ' is-ready' : ''}`} aria-live="polite">{statusText}</p>
           </form>
