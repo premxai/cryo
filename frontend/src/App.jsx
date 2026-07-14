@@ -20,12 +20,24 @@ function parseHash() {
   return { route: path || '', params: new URLSearchParams(query || '') }
 }
 
+// Anonymous visitors see the marketing surfaces.
 const PUBLIC_NAV = [
   { href: '#/', label: 'Search', match: (r) => r === '' },
   { href: '#/ask', label: 'Ask', match: (r) => r === 'ask' },
   { href: '#/docs', label: 'Docs', match: (r) => r === 'docs' },
   { href: '#/pricing', label: 'Pricing', match: (r) => r === 'pricing' },
 ]
+
+// Signed-in members get the product surfaces — no public Search/Ask.
+const AUTHED_NAV = [
+  { href: '#/app', label: 'Console', match: (r) => r === 'app' },
+  { href: '#/dashboard', label: 'Keys', match: (r) => r === 'dashboard' },
+  { href: '#/docs', label: 'Docs', match: (r) => r === 'docs' },
+  { href: '#/pricing', label: 'Pricing', match: (r) => r === 'pricing' },
+]
+
+// Routes a signed-in member shouldn't land on — bounce them to the console.
+const MEMBER_REDIRECT = new Set(['', 'ask', 'login', 'signup'])
 
 /**
  * App — archive-editorial shell: three-tier header, hash router, footer.
@@ -42,12 +54,14 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  const isHome = route === ''
+  // Signed-in members never see the public Search/Ask/auth pages.
+  useEffect(() => {
+    if (session && MEMBER_REDIRECT.has(route)) window.location.hash = '#/app'
+  }, [session, route])
 
-  // Signed-in users get a "Console" nav item.
-  const nav = session
-    ? [...PUBLIC_NAV, { href: '#/app', label: 'Console', match: (r) => r === 'app' }]
-    : PUBLIC_NAV
+  const isHome = route === '' && !session
+  const nav = session ? AUTHED_NAV : PUBLIC_NAV
+  const homeHref = session ? '#/app' : '#/'
 
   const footers = {
     '': ['CRYO / FROZEN WEB INFRASTRUCTURE', 'STATUS: LIVE CORPUS', '© 2026'],
@@ -66,7 +80,7 @@ export default function App() {
       <a className="skip-link" href="#main">Skip to content</a>
 
       <header className="site-header">
-        <a className="brand" href="#/" aria-label="CRYO home">
+        <a className="brand" href={homeHref} aria-label="CRYO home">
           <img src={brandMark} alt="" />
           <span>CRYO</span>
         </a>
@@ -89,8 +103,9 @@ export default function App() {
         <div className="header-actions" aria-label="Account actions">
           {session ? (
             <>
-              <a className="account-link" href="#/dashboard">Keys</a>
-              <a className="signup-link" href="#/app">Console</a>
+              <span className="account-link" style={{ color: 'var(--muted)', cursor: 'default' }}>
+                {session.email}
+              </span>
               <button
                 className="key-link"
                 type="button"

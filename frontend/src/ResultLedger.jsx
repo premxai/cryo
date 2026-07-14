@@ -98,8 +98,8 @@ export default function ResultLedger({
 
       {!loading && !error && hasQuery && results.length === 0 && searchTimeMs !== null && !overlay && (
         <div className="ledger-note">
-          No record matched “{query}”. Try broader terms or clear a filter. A production
-          search explains zero results without inventing them.
+          No records for “{query}” yet. We’re actively expanding the frozen corpus —
+          check back later, or try broader terms.
         </div>
       )}
 
