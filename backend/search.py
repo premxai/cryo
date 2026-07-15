@@ -1,5 +1,6 @@
 """Search logic — BM25 keyword search (Meilisearch) + semantic re-ranking (fastembed)."""
 
+import os
 import time
 from typing import Any
 
@@ -16,27 +17,35 @@ RERANK_CANDIDATES = 50  # fetch this many from BM25, re-rank, return top N
 
 _meili_client: meilisearch.Client | None = None
 _embed_model: Any = None  # lazy-loaded fastembed model
+_embed_load_failed = False  # sentinel: don't retry a slow/failing load every call
+
+# Persistent cache (bind-mounted, survives container recreates). The model is
+# pre-downloaded here; HF_HUB_OFFLINE=1 avoids HuggingFace's rate-limited API.
+_FASTEMBED_CACHE = os.environ.get("FASTEMBED_CACHE_PATH", "/app/data/fastembed_cache")
 
 
 def _get_embed_model():
-    """Lazily load the fastembed model (downloads ~40MB on first call)."""
-    global _embed_model
-    if _embed_model is None:
-        try:
-            import os
+    """Lazily load the fastembed re-rank model from the persistent cache.
 
-            from fastembed import TextEmbedding
+    On failure, set a sentinel so we don't retry the (slow, possibly
+    rate-limited) download on every search — search degrades to pure BM25.
+    """
+    global _embed_model, _embed_load_failed
+    if _embed_model is not None or _embed_load_failed:
+        return _embed_model
+    try:
+        from fastembed import TextEmbedding
 
-            os.environ.setdefault("FASTEMBED_CACHE_PATH", "/tmp/fastembed_cache")
-            os.makedirs("/tmp/fastembed_cache", exist_ok=True)
-            _embed_model = TextEmbedding(
-                model_name="BAAI/bge-small-en-v1.5",
-                cache_dir="/tmp/fastembed_cache",
-            )
-            logger.info("cryo.search.embed_model_loaded", model="BAAI/bge-small-en-v1.5")
-        except Exception as exc:
-            logger.warning("cryo.search.embed_unavailable", error=str(exc))
-            _embed_model = None
+        os.makedirs(_FASTEMBED_CACHE, exist_ok=True)
+        _embed_model = TextEmbedding(
+            model_name="BAAI/bge-small-en-v1.5",
+            cache_dir=_FASTEMBED_CACHE,
+        )
+        logger.info("cryo.search.embed_model_loaded", cache=_FASTEMBED_CACHE)
+    except Exception as exc:
+        logger.warning("cryo.search.embed_unavailable", error=str(exc))
+        _embed_model = None
+        _embed_load_failed = True
     return _embed_model
 
 

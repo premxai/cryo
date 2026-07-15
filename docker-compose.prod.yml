@@ -78,6 +78,12 @@ services:
       # workers share the 6 cores without oversubscribing under concurrency.
       - OMP_NUM_THREADS=1
       - ORT_NUM_THREADS=1
+      # Re-rank model lives in the persistent bind-mount; offline mode avoids
+      # HuggingFace's rate-limited API (the file cache is pre-populated).
+      - FASTEMBED_CACHE_PATH=/app/data/fastembed_cache
+      - HF_HOME=/app/data/.hf_cache
+      - HF_HUB_OFFLINE=1
+      - HF_HUB_DISABLE_XET=1
     depends_on:
       meilisearch:
         condition: service_healthy
