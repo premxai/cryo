@@ -4,6 +4,7 @@ import re
 import time
 from typing import Annotated
 
+import anyio
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response
 from sqlalchemy import select
@@ -95,7 +96,9 @@ async def v1_search(
         content_type=body.content_type,
     )
     try:
-        internal = keyword_search(params)
+        # Offload the blocking BM25 + CPU-bound re-rank to a thread so it does
+        # not block the event loop (the cause of poor search concurrency).
+        internal = await anyio.to_thread.run_sync(keyword_search, params)
     except Exception as exc:
         logger.error("cryo.v1.search_failed", query=body.query, error=str(exc))
         raise APIError(503, "search_unavailable", "Search is temporarily unavailable") from exc

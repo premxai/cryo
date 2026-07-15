@@ -16,6 +16,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Annotated
 
+import anyio
 import structlog
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
@@ -47,6 +48,7 @@ from backend.search import (
     semantic_search,
     suggest_completions,
     verify_meilisearch,
+    warmup_embed_model,
 )
 
 logger = structlog.get_logger()
@@ -76,6 +78,10 @@ async def lifespan(app: FastAPI):
         )
     else:
         logger.info("cryo.startup.meili_ok", url=settings.meilisearch_url)
+
+    # Warm the embedding model so the first search doesn't pay the cold-start
+    # cost (runs off the event loop so startup isn't blocked).
+    await anyio.to_thread.run_sync(warmup_embed_model)
 
     # MCP streamable-HTTP session manager must run for the /mcp mount to serve
     mcp.streamable_http_app()  # ensure the (lazy) session manager exists
@@ -242,7 +248,9 @@ async def search(params: Annotated[SearchQuery, Depends()]) -> SearchResponse:
     Results include highlighted matched terms in text_preview.
     """
     try:
-        return keyword_search(params)
+        # Offload the blocking BM25 + CPU-bound re-rank to a thread so it does
+        # not block the event loop (the cause of poor search concurrency).
+        return await anyio.to_thread.run_sync(keyword_search, params)
     except Exception as exc:
         logger.error("cryo.search.failed", query=params.q, error=str(exc))
         raise HTTPException(
@@ -290,7 +298,7 @@ async def suggest(
     Uses lightweight Meilisearch search to extract common phrases.
     Always returns a list (empty on error — never raises).
     """
-    return suggest_completions(q, limit=8)
+    return await anyio.to_thread.run_sync(lambda: suggest_completions(q, limit=8))
 
 
 @app.get(
@@ -309,7 +317,7 @@ async def facets(
     Omit q for global corpus distribution.
     Always returns a dict (empty on error — never raises).
     """
-    return get_facet_counts(q)
+    return await anyio.to_thread.run_sync(lambda: get_facet_counts(q))
 
 
 @app.get(

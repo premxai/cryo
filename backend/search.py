@@ -40,6 +40,23 @@ def _get_embed_model():
     return _embed_model
 
 
+def warmup_embed_model() -> None:
+    """Load the model and run one dummy inference at startup.
+
+    fastembed loads the ONNX model lazily on first use (~1-2s). Doing it here,
+    per worker at boot, means the first real search doesn't stall — the main
+    cause of timeouts under a cold traffic burst.
+    """
+    model = _get_embed_model()
+    if model is None:
+        return
+    try:
+        list(model.embed(["cryo search warmup"]))
+        logger.info("cryo.search.embed_warmed")
+    except Exception as exc:  # pragma: no cover - best-effort warmup
+        logger.warning("cryo.search.warmup_failed", error=str(exc))
+
+
 def _cosine_scores(query: str, texts: list[str]) -> list[float]:
     """Return cosine similarity scores between query and each text. Falls back to 0.0."""
     model = _get_embed_model()
