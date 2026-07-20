@@ -132,6 +132,8 @@ button { cursor: pointer; }
   padding: 0 1.25rem; color: var(--blue); font: 500 13px var(--mono); text-transform: uppercase;
 }
 .hero-search button:hover { background: var(--blue); color: white; }
+.product-hunt-badge { display: inline-flex; margin-top: 1.35rem; line-height: 0; }
+.product-hunt-badge img { display: block; max-width: 100%; height: auto; }
 .hero-footnotes { display: flex; gap: 2rem; margin-top: 1.5rem; font: 400 10px/1.5 var(--mono); }
 .hero-footnotes p { margin: 0; }
 .hero-footnotes b, .hero-footnotes strong, .hero-footnotes small { display: block; }
