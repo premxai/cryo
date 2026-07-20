@@ -61,6 +61,7 @@ button { cursor: pointer; }
   font: 800 29px/1 var(--display); letter-spacing: .045em;
 }
 .brand img { height: 36px; width: 36px; object-fit: contain; }
+.home .brand img { height: 42px; width: 42px; }
 .site-nav {
   display: flex; align-items: center; gap: 2.5rem;
   font: 500 12px var(--mono); text-transform: uppercase;
@@ -457,6 +458,7 @@ button { cursor: pointer; }
   .site-header { height: 74px; grid-template-columns: 1fr auto; padding: 0 1.25rem; }
   .brand { font-size: 25px; }
   .brand img { width: 30px; height: 30px; }
+  .home .brand img { width: 34px; height: 34px; }
   .menu-button { display: block; border: 0; background: transparent; color: var(--blue); font: 500 11px var(--mono); text-transform: uppercase; }
   .site-nav { display: none; position: absolute; top: 73px; left: 0; right: 0; padding: 1.2rem; background: var(--paper); border-bottom: 1px solid var(--ink); z-index: 5; }
   .site-nav.is-open { display: grid; gap: .75rem; }

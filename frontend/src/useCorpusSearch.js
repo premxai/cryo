@@ -77,7 +77,7 @@ export function useCorpusSearch({ pageSize = 20, auto = true, syncUrl = true } =
       setTotal(data.total)
       setSearchTimeMs(data.search_time_ms)
       if (data.facets && Object.keys(data.facets).length) setFacets(data.facets)
-      document.title = q ? `${q} — CRYO` : 'CRYO — The web before the AI web.'
+      document.title = 'CRYO'
     } catch (err) {
       setError(err.message || 'Search failed. Is the backend running?')
     } finally {
