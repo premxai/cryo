@@ -64,7 +64,8 @@ export default function Search() {
 
   return (
     <>
-      <aside className="product-hunt-launch" aria-label="Cryo on Product Hunt">
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="hero">
         <a
           className="product-hunt-badge"
           href="https://www.producthunt.com/products/cryo-3?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-cryo-3"
@@ -78,10 +79,6 @@ export default function Search() {
             src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1201696&theme=light&t=1784568781184"
           />
         </a>
-      </aside>
-
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow"><span></span> ARCHIVE INDEX / CUT OFF 2022-01-01</p>
           <h1>The web<br />before the<br /><em>AI web.</em></h1>

@@ -132,11 +132,10 @@ button { cursor: pointer; }
   padding: 0 1.25rem; color: var(--blue); font: 500 13px var(--mono); text-transform: uppercase;
 }
 .hero-search button:hover { background: var(--blue); color: white; }
-.product-hunt-launch {
-  display: flex; justify-content: center; padding: .8rem var(--gutter);
-  border-bottom: 1px solid var(--line);
+.hero .product-hunt-badge {
+  position: absolute; top: 1rem; left: 50%; z-index: 2;
+  display: inline-flex; line-height: 0; transform: translateX(-50%);
 }
-.product-hunt-badge { display: inline-flex; line-height: 0; }
 .product-hunt-badge img { display: block; max-width: 100%; height: auto; }
 .hero-footnotes { display: flex; gap: 2rem; margin-top: 1.5rem; font: 400 10px/1.5 var(--mono); }
 .hero-footnotes p { margin: 0; }
@@ -479,7 +478,7 @@ button { cursor: pointer; }
   .hero-search button { border-left: 0; border-top: 1px solid var(--blue); padding: .85rem; }
   .hero-footnotes { gap: 1rem; }
   .home .hero { display: block; }
-  .product-hunt-launch { padding: .7rem 1.25rem; }
+  .hero .product-hunt-badge { top: .75rem; }
   .home .archive-figure { width: calc(100% + 2.5rem); height: 420px; margin: 2.4rem -1.25rem 0; transform: translateY(-.5rem); }
   .home .archive-figure figcaption { margin: -2.6rem 1.25rem 0; width: calc(100% - 2.5rem); }
   .search-shell, .promise-band, .method-note, .price-faq { display: block; padding-left: 1.25rem; padding-right: 1.25rem; }
