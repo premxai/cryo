@@ -64,6 +64,22 @@ export default function Search() {
 
   return (
     <>
+      <aside className="product-hunt-launch" aria-label="Cryo on Product Hunt">
+        <a
+          className="product-hunt-badge"
+          href="https://www.producthunt.com/products/cryo-3?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-cryo-3"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            alt="CRYO - Search the web before it became AI-generated | Product Hunt"
+            width="250"
+            height="54"
+            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1201696&theme=light&t=1784568781184"
+          />
+        </a>
+      </aside>
+
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="hero">
         <div className="hero-copy">
@@ -74,19 +90,6 @@ export default function Search() {
             capture record and an honest human-authenticity state.
           </p>
           <AutocompleteInput value={query} onChange={setQuery} onSearch={onSubmit} inputRef={inputRef} />
-          <a
-            className="product-hunt-badge"
-            href="https://www.producthunt.com/products/cryo-3?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-cryo-3"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              alt="CRYO - Search the web before it became AI-generated | Product Hunt"
-              width="250"
-              height="54"
-              src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1201696&theme=light&t=1784568781184"
-            />
-          </a>
           <div className="hero-footnotes">
             <p><b>FROZEN CUTOFF</b><strong>2022–01–01</strong><small>00:00:00 UTC</small></p>
             <p>Not a feed. Not a rewrite.<br />An inspectable corpus for people and agents.</p>
