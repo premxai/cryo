@@ -4,7 +4,7 @@
  */
 
 const CONTACT = 'kanaparthiprembabu@gmail.com'
-const UPDATED = 'Last updated 14 July 2026'
+const UPDATED = 'Last updated 21 July 2026'
 
 export default function Legal({ mode }) {
   return mode === 'terms' ? <Terms /> : <Privacy />
@@ -30,6 +30,7 @@ function Privacy() {
         <li><strong>Usage data</strong> — per-key request counts, endpoints called, and timestamps, used to meter quotas and prevent abuse.</li>
         <li><strong>Search queries</strong> — processed to return results and may be logged transiently for operating the service, debugging, and abuse prevention.</li>
         <li><strong>Basic technical data</strong> — IP address and request metadata, as is standard for any web service, used for security and rate limiting.</li>
+        <li><strong>Anonymous website analytics</strong> — aggregated page-view and technical data collected through Vercel Web Analytics. We do not send search-query parameters or custom analytics events.</li>
       </ul>
 
       <h2>What we don't collect</h2>
@@ -39,7 +40,7 @@ function Privacy() {
       <p>We rely on a small number of processors to run Cryo:</p>
       <ul>
         <li><strong>Clerk</strong> — authentication and account management.</li>
-        <li><strong>Vercel</strong> — hosting for the website.</li>
+        <li><strong>Vercel</strong> — website hosting and anonymous, aggregated web analytics.</li>
         <li><strong>IONOS</strong> — hosting for the API and database.</li>
       </ul>
       <p>
@@ -49,7 +50,7 @@ function Privacy() {
       </p>
 
       <h2>Cookies</h2>
-      <p>Cryo uses only the cookies its authentication provider sets to keep you signed in. We do not use advertising or analytics cookies at this time.</p>
+      <p>Cryo uses only the cookies its authentication provider sets to keep you signed in. We do not use advertising cookies. Vercel Web Analytics does not use third-party cookies.</p>
 
       <h2>Data retention</h2>
       <p>Account data is kept while your account is active. Usage records are retained for metering and audit purposes. You can request deletion of your account and associated data at any time.</p>

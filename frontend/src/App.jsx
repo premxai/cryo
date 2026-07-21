@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import Search from './Search.jsx'
 import AppSearch from './AppSearch.jsx'
 import Docs from './Docs.jsx'
@@ -152,6 +153,7 @@ export default function App() {
         </span>
         <span>{foot[2]}</span>
       </footer>
+      <Analytics beforeSend={(event) => ({ ...event, url: event.url.split('?')[0] })} />
     </div>
   )
 }
